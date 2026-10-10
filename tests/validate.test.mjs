@@ -91,3 +91,33 @@ test("the minimal example in reference/format.md validates against a real captur
   const example = JSON.parse(format.match(/## Minimal example\s+```json\n([\s\S]*?)```/)[1]);
   assert.deepEqual(validate(capture([dir]), example), { errors: [], warnings: [] });
 });
+
+test("code tour steps must sit on diff rows, in order, without overlap", () => {
+  has(errorsOf((w) => (w.files[3].tour[0].lines.end = 99)), /^files\[3\]\.tour\[0\]\.lines\.end: after line 99 is not in the diff of ratelimit\/limiter\.go/);
+  has(errorsOf((w) => (w.files[3].tour[1].lines = { start: 15, end: 22 })), /^files\[3\]\.tour\[1\]\.lines: overlaps or comes before the previous segment/);
+  has(errorsOf((w) => w.files[3].tour.reverse()), /tour\[1\]\.lines: overlaps or comes before/);
+  has(errorsOf((w) => (w.files[3].tour[0].lines = { start: 18, end: 11 })), /tour\[0\]\.lines: end 11 comes before start 18/);
+  has(errorsOf((w) => (w.files[3].tour[0].lines.side = "left")), /tour\[0\]\.lines\.side: must be one of/);
+  has(errorsOf((w) => (w.files[3].tour[0].why = "x")), /^files\[3\]\.tour\[0\]\.why: unknown key/);
+  has(errorsOf((w) => delete w.files[3].tour[0].text), /tour\[0\]\.text: is required/);
+  has(errorsOf((w) => (w.files[3].tour[0].text += " [x](#nope)")), /tour\[0\]\.text: links to #nope/);
+});
+
+test("tours are expected on source files and should cover changed hunks", () => {
+  const w = good();
+  delete w.files[1].tour;
+  w.files[0].tour = [w.files[0].tour[1]];
+  const { errors, warnings } = validate(change, w);
+  assert.deepEqual(errors, []);
+  assert.ok(warnings.includes("config.go has no code tour"));
+  const two = {
+    id: "x",
+    files: [{ path: "a.go", repo: "r", status: "modified", additions: 2, deletions: 0, isTest: false, hunks: [
+      { oldStart: 1, oldLines: 1, newStart: 1, newLines: 2, lines: [{ kind: "context", text: "a", oldLine: 1, newLine: 1 }, { kind: "add", text: "b", newLine: 2 }] },
+      { oldStart: 50, oldLines: 1, newStart: 51, newLines: 2, lines: [{ kind: "context", text: "c", oldLine: 50, newLine: 51 }, { kind: "add", text: "d", newLine: 52 }] },
+    ] }],
+  };
+  const tw = { title: "t", overview: { title: "o", explanation: "e" }, files: [{ path: "a.go", role: "r", explanation: "e", tour: [{ lines: { start: 1, end: 2 }, text: "t" }] }] };
+  assert.deepEqual(validate(two, tw).warnings, ["a.go: the tour misses 1 changed hunk(s) (after lines 51-52)"]);
+  assert.ok(!warnings.some((x) => x.startsWith("README.md")), "docs need no tour");
+});

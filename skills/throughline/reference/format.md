@@ -21,8 +21,9 @@
     {
       "path": "ratelimit/limiter.go",               // exactly as in change.json (bundles have a repo prefix)
       "role": "The bucket: lazy refill under one mutex",   // its job in the flow, not its filename
-      "explanation": "2-3 short paragraphs. Link ranges like [the refill](#refill).",
+      "explanation": "1-2 short paragraphs: the file's job and key decision. Link ranges like [the refill](#refill).",
       "anchors": [{ "id": "refill", "side": "after", "startLine": 41, "endLine": 43, "note": "Refill by elapsed time" }],
+      "tour": [{ "lines": { "start": 31, "end": 33 }, "title": "One lock per call", "text": "What this block does and why." }],
       "diagram": Diagram,                           // optional
       "remember": "…",                              // optional
       "notes": [Note],                              // optional, max 3
@@ -37,6 +38,12 @@
 - `startLine` and `endLine` must both be rows printed by `--show`.
 - `id` is a lowercase slug. Explanations may only link ids of their own file's anchors; the overview has no anchors.
 - Each anchor is also listed under the explanation as a line link, labelled with its `note`.
+
+**Tour:** the code walkthrough of one file, as `[{ lines: { start, end, side? }, title?, text }]`, at most 40 steps.
+- **Who gets one.** Every non-test source file gets a tour that covers every meaningful changed hunk. Tests, docs and config get no tour, only their one-line explanation.
+- **What a step explains.** Each step is one block of the diff, usually 3-25 lines. Explain what it does and why it is written this way: the control flow, edge cases and failure modes, and what breaks if it changes. 2-5 sentences. Don't narrate syntax line by line; idioms belong in Learn notes.
+- **Rules.** Steps follow the diff in order and must not overlap. `start` and `end` must be rows printed by `--show`, and `side` defaults to `"after"`. The validator warns about changed hunks no step covers.
+- **Where it renders.** The tour appears as numbered steps under the explanation, which becomes the file's short summary. The reader walks the steps with `n`/`p`.
 
 **Note (Learn):** `{ title, body, code?, lang?, vs?, vsLang?, lines? }`.
 - `body` is 1-3 sentences.
@@ -64,7 +71,11 @@ Files you leave out appear last under "Not explained". The validator warns about
       "path": "cart.go",
       "role": "Clamp, then discount",
       "explanation": "The [guard](#clamp) runs before the arithmetic, so the subtraction never sees a bad value.",
-      "anchors": [{ "id": "clamp", "startLine": 9, "endLine": 11, "note": "Clamp out-of-range discounts" }]
+      "anchors": [{ "id": "clamp", "startLine": 9, "endLine": 11, "note": "Clamp out-of-range discounts" }],
+      "tour": [
+        { "lines": { "start": 3, "end": 4 }, "title": "A new parameter", "text": "Every caller must now pass a discount; the compiler finds the ones that don't." },
+        { "lines": { "start": 9, "end": 12 }, "title": "Clamp, then subtract", "text": "Out-of-range values become 0 instead of an error, so a bad caller silently gets full price. Integer division truncates, so 10% of 155 cents is 15." }
+      ]
     },
     { "path": "cart_test.go", "role": "Proof", "explanation": "One case: 150 cents at 10% is 135." }
   ]

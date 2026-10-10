@@ -6,7 +6,9 @@ import { readFileSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const LIMITS = { notes: 3, noteLines: 20, quiz: 12, diagrams: 6, anchors: 40, decisions: 12 };
+const LIMITS = { notes: 3, noteLines: 20, quiz: 12, diagrams: 6, anchors: 40, decisions: 12, tour: 40 };
+// Files that need no code tour: docs and config.
+const PROSE = /\.(md|mdx|markdown|txt|rst|json|jsonc|ya?ml|toml|lock|ini|cfg|env|csv|svg)$/i;
 
 function checker() {
   const errors = [];
@@ -57,6 +59,24 @@ function ranges(set) {
   }
   return out.map(([a, b]) => (a === b ? `${a}` : `${a}-${b}`)).join(", ") || "none";
 }
+/** Every diff row of a file in display order, so ranges on either side can be ordered. */
+function rowIndex(file) {
+  const rows = { after: new Map(), before: new Map() };
+  const changed = []; // per hunk: the row indices of + and - rows
+  let i = 0;
+  for (const h of file?.hunks || []) {
+    const hunkRows = [];
+    for (const l of h.lines) {
+      if (l.newLine !== undefined) rows.after.set(l.newLine, i);
+      if (l.oldLine !== undefined) rows.before.set(l.oldLine, i);
+      if (l.kind !== "context") hunkRows.push(i);
+      i++;
+    }
+    if (hunkRows.length) changed.push({ rows: hunkRows, label: `${h.newStart}-${h.newStart + Math.max(0, h.newLines - 1)}` });
+  }
+  return { rows, changed };
+}
+
 export function anchorLinks(markdown) {
   return [...markdown.matchAll(/\]\(#([^)\s]+)\)/g)].map((m) => m[1]);
 }
@@ -138,7 +158,36 @@ export function validate(change, walkthrough) {
         if (inChange && a && typeof a === "object") range(ap, a, path);
       }, 1, LIMITS.anchors),
       notes: arr(note(path, true), 1, LIMITS.notes),
+      tour: arr((tp, t) => {
+        obj(tp, t, {
+          lines: (lp, l) => obj(lp, l, { start: int(1), end: int(1), side: oneOf("after", "before") }, ["start", "end"]),
+          title: str(120), text: str(3000),
+        }, ["lines", "text"]);
+      }, 1, LIMITS.tour),
     }, ["path", "role", "explanation"]);
+    if (inChange && Array.isArray(f.tour)) {
+      const { rows, changed } = rowIndex(byPath.get(path));
+      let prevEnd = -1;
+      const covered = [];
+      f.tour.forEach((t, j) => {
+        const l = t?.lines;
+        if (!l || !Number.isInteger(l.start) || !Number.isInteger(l.end)) return;
+        const side = l.side || "after";
+        if (!rows[side]) return; // an invalid side is already reported
+        const lp = `${p}.tour[${j}].lines`;
+        const a = rows[side].get(l.start), b = rows[side].get(l.end);
+        const visible = ranges(new Set(rows[side].keys()));
+        if (a === undefined) fail(`${lp}.start`, `${side} line ${l.start} is not in the diff of ${path}; visible ${side} lines: ${visible}`);
+        if (b === undefined) fail(`${lp}.end`, `${side} line ${l.end} is not in the diff of ${path}; visible ${side} lines: ${visible}`);
+        if (a === undefined || b === undefined) return;
+        if (b < a) return fail(lp, `end ${l.end} comes before start ${l.start}`);
+        if (a <= prevEnd) fail(lp, "overlaps or comes before the previous segment; segments must follow the diff in order");
+        prevEnd = Math.max(prevEnd, b);
+        covered.push([a, b]);
+      });
+      const missed = changed.filter((h) => !h.rows.some((r) => covered.some(([a, b]) => r >= a && r <= b)));
+      if (missed.length) warnings.push(`${path}: the tour misses ${missed.length} changed hunk(s) (after lines ${missed.map((h) => h.label).join(", ")})`);
+    }
     const ids = new Set();
     for (const [j, a] of (Array.isArray(f?.anchors) ? f.anchors : []).entries())
       if (a?.id) {
@@ -147,6 +196,12 @@ export function validate(change, walkthrough) {
       }
     if (typeof f?.explanation === "string")
       for (const id of anchorLinks(f.explanation)) if (!ids.has(id)) fail(`${p}.explanation`, `links to #${id}, which is not an anchor id of this file`);
+    for (const [j, t] of (Array.isArray(f?.tour) ? f.tour : []).entries())
+      if (typeof t?.text === "string")
+        for (const id of anchorLinks(t.text)) if (!ids.has(id)) fail(`${p}.tour[${j}].text`, `links to #${id}, which is not an anchor id of this file`);
+    const changedFile = inChange && byPath.get(path);
+    if (changedFile && !f.tour && !(f.isTest ?? changedFile.isTest) && !changedFile.binary && !changedFile.omitted && !PROSE.test(path) && changedFile.status !== "deleted")
+      warnings.push(`${path} has no code tour`);
   });
 
   for (const f of change?.files || []) {

@@ -19,7 +19,7 @@ Turn a git change into one self-contained HTML reader. `<skill>` is the director
 5. **Check the profile:** `node <skill>/scripts/profile.mjs` prints what the reader knows and is learning. Add Learn notes only for `learning` topics that appear in this diff.
 6. **Read `<skill>/reference/format.md` once.** Then write `<dir>/walkthrough.json`:
    - the overview;
-   - every non-test source file, in flow order;
+   - every non-test source file, in flow order, with a short summary and a `tour`: numbered steps over its changed blocks that explain the control flow, the why, the edge cases and what breaks;
    - one line each for tests, docs and config.
 7. **Render:** `node <skill>/scripts/show.mjs <dir>` validates the JSON, writes `<dir>/throughline.html` and opens it. Each `error:` line names a JSON path; fix it and rerun.
 8. **Report:** give the user the HTML path and say what you could not verify.
