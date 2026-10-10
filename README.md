@@ -5,7 +5,7 @@ Your agent wrote the change. Throughline helps you understand it well enough to 
 Throughline is an agent skill. You ask "walk me through my changes in Throughline", and your agent writes a walkthrough of the git change. It then opens a single HTML file:
 
 - **Left pane:** the full diff, VS Code style. Each changed file is a collapsible section, ordered the way the explanation flows. Files the walkthrough skips come last, under "Not explained".
-- **Right pane:** with no file selected, *the whole idea*. That covers what changed and why, interactive diagrams, the decisions to defend, a Remember line and a quiz. Select a file to read its explanation, with line links that highlight the diff and Learn notes for the language you're learning.
+- **Right pane:** with no file selected, *the whole idea*. That covers what changed and why, interactive diagrams, the decisions to defend, a Remember line and a quiz. Select a file to read its short summary and a **code tour**: numbered steps over its changed blocks that explain the control flow, the reasons, the edge cases and what breaks. Each step highlights its lines in the diff, and the diff's gutter shows the step numbers. Learn notes cover the language you're learning.
 
 ![The demo walkthrough: the diff on the left, a file's explanation with an interactive token-bucket diagram on the right](docs/demo-desktop.png)
 
@@ -18,7 +18,8 @@ Throughline is an agent skill. You ask "walk me through my changes in Throughlin
 - a **Tests** toggle that hides test files, shows totals without them, and makes `j`/`k` skip them;
 - per-file **Viewed** checkboxes, remembered in your browser for each change;
 - a path filter, plus expand all and collapse all;
-- keys: `j`/`k` or `←`/`→` move through files in flow order, `x` marks the file viewed, `Esc` goes back to the whole idea;
+- keys: `j`/`k` or `←`/`→` move through files in flow order, `n`/`p` walk the current file's code tour, `x` marks the file viewed, `Esc` goes back to the whole idea;
+- an `A−`/`A+` text size control (`-`/`=`) for the explanation, remembered per browser;
 - an "open in editor" link (`vscode://file/…:line`) on every file;
 - a phone layout, where the explanation rises as a sheet over the diff.
 
@@ -58,11 +59,12 @@ agent writes walkthrough.json ┘        └── validate.mjs (strict; errors 
    - `--base`, `--commits`, `--staged` and `--unstaged` override that.
    - Pass several repos to get one bundle, with paths prefixed by repo name.
    - Binary files and lockfiles keep their stats but not their bodies.
-2. **The agent writes `walkthrough.json`:** an overview, then file explanations in flow order. [`reference/format.md`](skills/throughline/reference/format.md) defines the format.
+2. **The agent writes `walkthrough.json`:** an overview, then file explanations in flow order. Each non-test source file gets a code tour. [`reference/format.md`](skills/throughline/reference/format.md) defines the format.
 3. **`scripts/show.mjs` validates the walkthrough and renders the page.** The validator rejects:
    - unknown keys;
    - paths that aren't in the change;
    - line references outside the diff;
+   - tour steps that are out of order, overlap or fall outside the diff;
    - bad quiz answer indexes;
    - notes over their caps.
 

@@ -15,7 +15,12 @@ import {
   splitPath,
   step,
   totals,
+  tourRange,
+  TEXT_SIZES,
+  loadTextSize,
+  saveTextSize,
 } from "./model.ts";
+import { Tour } from "./Tour.tsx";
 import { Markdown } from "./Markdown.tsx";
 import { FullDiff } from "./FullDiff.tsx";
 import { Diagram } from "./Diagram.tsx";
@@ -45,6 +50,8 @@ export function Reader({ data }: { data: ViewerData }) {
   const [highlight, setHighlight] = useState<Highlight>();
   const [hover, setHover] = useState<Highlight>();
   const [sheet, setSheet] = useState(false);
+  const [tourStep, setTourStep] = useState<number | null>(null);
+  const [textSize, setTextSize] = useState(loadTextSize);
   const codePane = useRef<HTMLDivElement>(null);
   const lessonPane = useRef<HTMLDivElement>(null);
 
@@ -88,8 +95,14 @@ export function Reader({ data }: { data: ViewerData }) {
     setViewed(next);
     saveViewed(change.id, next);
   };
+  const resize = (delta: number) => {
+    const next = Math.max(0, Math.min(TEXT_SIZES.length - 1, textSize + delta));
+    setTextSize(next);
+    saveTextSize(next);
+  };
   const select = (path: string) => {
     setSelected(path);
+    setTourStep(null);
     setOpen(path, true);
     setHighlight(undefined);
     setHover(undefined);
@@ -97,6 +110,7 @@ export function Reader({ data }: { data: ViewerData }) {
   };
   const back = () => {
     setSelected(null);
+    setTourStep(null);
     setHighlight(undefined);
     setHover(undefined);
   };
@@ -136,6 +150,17 @@ export function Reader({ data }: { data: ViewerData }) {
     } else if (e.key === "x" && selected) {
       e.preventDefault();
       toggleViewed(selected);
+    } else if ((e.key === "n" || e.key === "p") && current?.tour?.length) {
+      e.preventDefault();
+      const at = tourStep ?? -1;
+      const next = e.key === "n" ? at + 1 : at - 1;
+      if (next >= 0 && next < current.tour.length) goTourStep(next, false);
+    } else if (e.key === "-" || e.key === "_") {
+      e.preventDefault();
+      resize(-1);
+    } else if (e.key === "=" || e.key === "+") {
+      e.preventDefault();
+      resize(1);
     }
   };
   useEffect(() => {
@@ -144,12 +169,19 @@ export function Reader({ data }: { data: ViewerData }) {
     return () => window.removeEventListener("keydown", listener);
   }, []);
 
-  function jumpRange(range: Highlight) {
+  /** Select a tour step: highlight its lines, scroll the diff to them and keep the step in view. */
+  function goTourStep(i: number, closeSheet = true) {
+    if (!current?.tour?.[i]) return;
+    setTourStep(i);
+    jumpRange(tourRange(current.tour[i], current.path), closeSheet);
+    requestAnimationFrame(() => document.getElementById("tour-step-" + i)?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+  }
+  function jumpRange(range: Highlight, closeSheet = true) {
     setFilter("");
     setHover(undefined);
     setHighlight(range);
     setOpen(range.path, true);
-    setSheet(false);
+    if (closeSheet) setSheet(false);
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         const el = document.getElementById("diff-" + range.path)?.querySelector<HTMLElement>(".highlighted");
@@ -178,6 +210,20 @@ export function Reader({ data }: { data: ViewerData }) {
       <nav class="review-nav" aria-label="File navigation">
         <span class="brand" aria-hidden="true" />
         <strong title={walkthrough.title}>{walkthrough.title}</strong>
+        <span class="text-size" role="group" aria-label="Explanation text size">
+          <button type="button" aria-label="Smaller text" title="Smaller text (-)" disabled={textSize === 0} onClick={() => resize(-1)}>
+            A−
+          </button>
+          <button
+            type="button"
+            aria-label="Larger text"
+            title="Larger text (=)"
+            disabled={textSize === TEXT_SIZES.length - 1}
+            onClick={() => resize(1)}
+          >
+            A+
+          </button>
+        </span>
         <button type="button" aria-label="Previous file" onClick={() => go(-1)}>
           ←
         </button>
@@ -328,7 +374,17 @@ export function Reader({ data }: { data: ViewerData }) {
                           {lesson ? "Read this file's explanation →" : "Select this file →"}
                         </button>
                       )}
-                      <FullDiff file={file} highlight={hover || highlight} mentioned={mentioned} />
+                      <FullDiff
+                        file={file}
+                        highlight={hover || highlight}
+                        mentioned={mentioned}
+                        steps={
+                          current && current.path === file.path
+                            ? (current.tour || []).map((t) => tourRange(t, file.path))
+                            : undefined
+                        }
+                        activeStep={tourStep}
+                      />
                     </div>
                   )}
                 </section>
@@ -339,6 +395,7 @@ export function Reader({ data }: { data: ViewerData }) {
         <div
           ref={lessonPane}
           class={"lesson-pane" + (sheet ? " sheet-open" : "")}
+          style={{ "--read": TEXT_SIZES[textSize] + "px" }}
           aria-label="Explanation"
           tabIndex={0}
         >
@@ -363,6 +420,16 @@ export function Reader({ data }: { data: ViewerData }) {
                     <h1>{current.role}</h1>
                     <p class="file-caption">{splitPath(selectedFile, change).path}</p>
                     <Markdown text={current.explanation} {...linkHandlers} />
+                    {current.tour?.length ? (
+                      <Tour
+                        tour={current.tour}
+                        path={current.path}
+                        active={tourStep}
+                        onStep={(i) => goTourStep(i)}
+                        onHover={setHover}
+                        links={linkHandlers}
+                      />
+                    ) : null}
                     {current.diagram && <Diagram diagram={current.diagram} title={current.role} />}
                     {current.anchors?.length ? (
                       <nav class="line-references" aria-label="Line references">

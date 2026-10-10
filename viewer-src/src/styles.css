@@ -419,7 +419,7 @@ a {
 .reference-gutter {
   display: block;
   flex: none;
-  width: 10px;
+  width: 18px;
   color: var(--accent);
   text-align: center;
   font-size: 12px;
@@ -472,34 +472,38 @@ a {
 }
 
 /* Explanation pane. */
+/* Everything in the explanation scales from --read (set by the A−/A+ control). */
+.lesson-pane {
+  --read: 16px;
+}
 .lesson-content {
-  padding: 32px 34px 56px;
-  max-width: 760px;
+  padding: 28px 32px 56px;
+  max-width: 740px;
   margin-inline: auto;
-  font: 18px/1.65 var(--serif);
+  font: var(--read) / 1.6 var(--serif);
   overflow-wrap: anywhere;
 }
 .lesson-content h1 {
-  font-size: clamp(25px, 2.2vw, 31px);
+  font-size: 1.6em;
   line-height: 1.25;
   letter-spacing: -0.02em;
   margin: 0 0 22px;
   text-wrap: balance;
 }
 .lesson-content h2 {
-  font-size: 21px;
+  font-size: 1.2em;
   line-height: 1.3;
   margin: 30px 0 14px;
 }
 .lesson-content h3 {
-  font-size: 18px;
+  font-size: 1.05em;
   margin: 22px 0 8px;
 }
 .lesson-content p,
 .lesson-content ul,
 .lesson-content ol,
 .lesson-content blockquote {
-  margin: 0 0 18px;
+  margin: 0 0 0.95em;
 }
 .lesson-content ul,
 .lesson-content ol {
@@ -522,8 +526,8 @@ a {
 .lesson-content pre {
   overflow: auto;
   background: var(--surface);
-  padding: 14px;
-  font-size: 14px;
+  padding: 12px;
+  font-size: 0.8em;
   border-radius: 4px;
 }
 .lesson-content pre code {
@@ -535,12 +539,12 @@ a {
   text-decoration-thickness: 1px;
 }
 .flow-role {
-  font: 12px/1.5 var(--ui);
+  font: 0.72em/1.5 var(--ui);
   color: var(--muted);
   margin-bottom: 14px !important;
 }
 .lesson-content .file-caption {
-  font: 12px/1.5 var(--mono);
+  font: 0.72em/1.5 var(--mono);
   color: var(--muted);
   margin-top: -10px;
   margin-bottom: 24px;
@@ -550,14 +554,14 @@ a {
   background: none;
   color: var(--accent);
   padding: 0;
-  margin-bottom: 24px;
-  font: 12px/1.5 var(--ui);
+  margin-bottom: 20px;
+  font: 0.72em/1.5 var(--ui);
 }
 .line-references {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font: 13px/1.6 var(--ui);
+  font: 0.78em/1.6 var(--ui);
   margin: 22px 0;
 }
 .line-references small {
@@ -571,7 +575,7 @@ a {
 }
 .remember b {
   display: block;
-  font: 700 11px/1.4 var(--ui);
+  font: 700 0.65em/1.4 var(--ui);
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: var(--accent);
@@ -586,14 +590,14 @@ a {
   padding-top: 4px;
 }
 .decision-label {
-  font: 600 11px/1.4 var(--ui);
+  font: 600 0.65em/1.4 var(--ui);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
   margin-right: 4px;
 }
 .start-hint {
-  font: 13px/1.6 var(--ui);
+  font: 0.78em/1.6 var(--ui);
   color: var(--muted);
   margin-top: 36px !important;
 }
@@ -621,7 +625,7 @@ kbd {
   min-height: 120px;
 }
 .lesson-diagram figcaption {
-  font: 13px/1.55 var(--ui);
+  font: 0.78em/1.55 var(--ui);
   color: var(--muted);
   margin-top: 12px;
 }
@@ -637,7 +641,7 @@ kbd {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font: 10px/1.5 var(--ui);
+  font: 0.62em/1.5 var(--ui);
   margin-bottom: 4px;
 }
 .learn-for {
@@ -650,13 +654,13 @@ kbd {
 .learning-note summary {
   cursor: pointer;
   color: var(--muted);
-  font: 13px/1.6 var(--ui);
+  font: 0.8em/1.6 var(--ui);
 }
 .learning-note[open] summary {
   color: var(--ink);
 }
 .learning-note p {
-  font: 13px/1.65 var(--ui);
+  font: 0.8em/1.65 var(--ui);
   margin: 8px 0;
 }
 .note-code {
@@ -672,7 +676,7 @@ kbd {
   min-width: 0;
 }
 .note-code small {
-  font: 10px/1.6 var(--ui);
+  font: 0.62em/1.6 var(--ui);
   color: var(--muted);
 }
 .lesson-content .note-code pre {
@@ -681,7 +685,7 @@ kbd {
   padding: 10px;
   margin: 4px 0;
   border-radius: 3px;
-  font: 11px/1.65 var(--mono);
+  font: 0.7em/1.65 var(--mono);
 }
 .lesson-content .note-code pre code {
   font: inherit;
@@ -691,12 +695,12 @@ kbd {
   color: var(--accent);
   background: transparent;
   border: 0;
-  font-size: 11px;
+  font-size: 0.7em;
 }
 
 /* Quiz. */
 .quiz {
-  font: 15px/1.5 var(--ui);
+  font: 0.9em/1.5 var(--ui);
 }
 .quiz fieldset {
   border: 1px solid var(--border);
@@ -728,7 +732,7 @@ kbd {
   padding: 10px 12px;
   border-radius: 4px;
   background: var(--green-bg);
-  font-size: 14px;
+  font-size: 0.95em;
 }
 .lesson-content .quiz-feedback.wrong {
   background: var(--red-bg);
@@ -832,11 +836,7 @@ kbd {
     font-size: 18px;
   }
   .lesson-content {
-    padding: 22px 18px 44px;
-    font-size: 17px;
-  }
-  .lesson-content h1 {
-    font-size: 24px;
+    padding: 20px 16px 44px;
   }
   .lesson-diagram {
     padding: 8px;
@@ -868,4 +868,133 @@ kbd {
 .lesson-content .note-code pre,
 .lesson-content .file-caption {
   font-variant-ligatures: none;
+}
+
+/* Text size control in the top bar. */
+.text-size {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-right: 6px;
+}
+.review-nav .text-size button {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 0;
+}
+.review-nav .text-size button + button {
+  border-left: 1px solid var(--border);
+}
+
+/* Code tour: numbered steps beside numbered gutter marks in the diff. */
+.reference-gutter.step-mark {
+  font: 600 9px/1.75 var(--ui);
+  color: var(--bg);
+  background: var(--accent);
+  border-radius: 0 3px 3px 0;
+  opacity: 0.55;
+}
+.reference-gutter.step-mark.active {
+  opacity: 1;
+}
+.tour {
+  margin: 26px 0;
+}
+.tour-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+.lesson-content .tour-head h2 {
+  margin: 0;
+  font: 600 0.8em/1.4 var(--ui);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+.tour-count {
+  flex: 1;
+  font: 0.72em var(--ui);
+  color: var(--muted);
+}
+.tour-head button {
+  font-size: 15px;
+  line-height: 1;
+  padding: 3px 10px;
+  background: var(--bg);
+}
+.key-hint-inline {
+  font: 0.62em var(--mono);
+  color: var(--muted);
+}
+.lesson-content .tour-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.lesson-content .tour-step {
+  border-bottom: 1px solid #ecece7;
+  padding: 10px 0 4px 12px;
+  margin: 0;
+  border-left: 3px solid transparent;
+  transition: border-color 0.12s, background 0.12s;
+}
+.tour-step:hover {
+  background: #fbfbf9;
+}
+.tour-step.active {
+  border-left-color: var(--accent);
+  background: var(--soft);
+}
+.tour-step-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: none;
+  text-align: left;
+  font: 600 0.88em/1.4 var(--ui);
+}
+.tour-num {
+  flex: none;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--bg);
+  font: 600 11px/20px var(--ui);
+  text-align: center;
+}
+.tour-title {
+  flex: 1;
+}
+.tour-step-head small {
+  font: 400 0.8em var(--mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tour-text {
+  padding: 6px 0 4px 28px;
+  font-size: 0.94em;
+}
+.tour-text p:last-child {
+  margin-bottom: 0.5em;
+}
+@media (max-width: 759px) {
+  .review-nav .text-size button {
+    padding: 4px 7px;
+  }
+  .review-nav button {
+    padding: 4px 8px;
+  }
+  .tour-text {
+    padding-left: 0;
+  }
 }

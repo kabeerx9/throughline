@@ -75,9 +75,13 @@ const walkthrough = {
         { id: "apply", startLine: 12, endLine: 12, note: "Integer discount" },
       ],
       remember: "Go integer division truncates toward zero.",
+      tour: [
+        { lines: { start: 3, end: 4 }, title: "A new parameter", text: "Every caller must pass a discount now." },
+        { lines: { start: 9, end: 12 }, title: "Clamp, then subtract", text: "Out-of-range becomes 0; see [the guard](#clamp)." },
+      ],
       notes: [{ title: "Integer division", body: "Go's / on ints truncates; TypeScript numbers are floats, so the client floors explicitly.", code: "t*discount/100", lang: "Go", vs: "Math.floor((sum * discount) / 100)", vsLang: "TypeScript", lines: { startLine: 12, endLine: 12 } }],
     },
-    { path: "web/src/cart.ts", role: "Client: the same arithmetic", explanation: "Defaults to no discount so old callers keep working.", anchors: [{ startLine: 1, endLine: 4 }] },
+    { path: "web/src/cart.ts", role: "Client: the same arithmetic", explanation: "Defaults to no discount so old callers keep working.", anchors: [{ startLine: 1, endLine: 4 }], tour: [{ lines: { start: 1, end: 4 }, text: "Floors the discount so it matches Go for positive totals." }] },
     { path: "api/cart_test.go", role: "Proof", explanation: "One case: 150 cents at 10% is 135." },
   ],
 };
@@ -186,7 +190,7 @@ await check("selecting a file switches the right pane; Esc returns", async () =>
 
 await check("line references highlight and scroll the diff", async () => {
   await page.keyboard.press("j");
-  await page.getByRole("link", { name: "guard" }).hover();
+  await page.getByRole("link", { name: "guard", exact: true }).hover();
   assert.equal(await page.locator(".code-line.highlighted").count(), 3, "hover highlights L9–11");
   await page.getByRole("link", { name: "the return" }).click();
   await page.waitForTimeout(500);
@@ -197,6 +201,60 @@ await check("line references highlight and scroll the diff", async () => {
   assert.ok((await page.locator(".code-line.mentioned").count()) >= 4, "gutter marks for mentioned ranges");
   const href = await page.locator('.diff-file[data-path="api/cart.go"] .file-actions a').getAttribute("href");
   assert.equal(href, `vscode://file${realpathSync(api)}/cart.go:9`);
+});
+
+await check("code tour: numbered steps, gutter marks and n/p walking", async () => {
+  // still on api/cart.go from the previous check
+  assert.deepEqual(await page.locator(".tour-step .tour-title").allInnerTexts(), ["A new parameter", "Clamp, then subtract"]);
+  assert.equal(await page.locator(".tour-count").innerText(), "2 steps");
+  const marks = page.locator('.diff-file[data-path="api/cart.go"] .step-mark');
+  assert.deepEqual(await marks.allInnerTexts(), ["1", "2"]);
+  assert.equal(await marks.nth(1).evaluate((e) => e.parentElement.dataset.new), "9");
+  await page.keyboard.press("n");
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator(".tour-count").innerText(), "Step 1 of 2");
+  assert.deepEqual(await page.locator(".code-line.highlighted").evaluateAll((els) => els.map((e) => e.dataset.new)), ["3", "4"]);
+  await page.keyboard.press("n");
+  await page.waitForTimeout(300);
+  assert.deepEqual(await page.locator(".code-line.highlighted").evaluateAll((els) => els.map((e) => e.dataset.new)), ["9", "10", "11", "12"]);
+  assert.ok(await page.locator(".code-line.highlighted").first().isVisible());
+  assert.equal(await page.locator(".tour-step.active .tour-num").innerText(), "2");
+  assert.ok(await page.locator('.step-mark.active').count() === 1);
+  await page.keyboard.press("n"); // at the end: stays
+  assert.equal(await page.locator(".tour-count").innerText(), "Step 2 of 2");
+  await page.keyboard.press("p");
+  assert.equal(await page.locator(".tour-count").innerText(), "Step 1 of 2");
+  await page.locator(".tour-step").nth(1).hover();
+  assert.equal(await page.locator(".code-line.highlighted").count(), 4, "hover previews a step");
+  assert.ok(await page.getByRole("button", { name: "Previous step" }).isDisabled(), "no step before the first");
+  await settledClick(page.getByRole("button", { name: "Next step" }));
+  assert.equal(await page.locator(".tour-count").innerText(), "Step 2 of 2");
+});
+
+await check("text size: A−/A+, -/= keys, bounds and persistence", async () => {
+  const size = () => page.locator(".lesson-content").evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+  const frameHeight = () => page.locator(".lesson-diagram iframe").first().evaluate((e) => e.getBoundingClientRect().height);
+  assert.equal(await size(), 16, "default is one step below the old 18px");
+  await page.keyboard.press("=");
+  assert.equal(await size(), 17.5);
+  await page.getByRole("button", { name: "Larger text" }).click();
+  assert.equal(await size(), 19);
+  assert.ok(await page.getByRole("button", { name: "Larger text" }).isDisabled());
+  await page.keyboard.press("=");
+  assert.equal(await size(), 19, "upper bound");
+  const h1 = await page.locator(".lesson-content h1").evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+  assert.ok(Math.abs(h1 - 19 * 1.6) < 0.5, "headings scale with the text");
+  await page.reload();
+  await page.waitForSelector(".reader");
+  assert.equal(await size(), 19, "remembered");
+  const before = await frameHeight();
+  for (let i = 0; i < 4; i++) await page.keyboard.press("-");
+  assert.equal(await size(), 14.5, "lower bound");
+  assert.ok(await page.getByRole("button", { name: "Smaller text" }).isDisabled());
+  assert.ok(Math.abs((await frameHeight()) - before) < 2, "diagrams are not rescaled");
+  await page.getByRole("button", { name: "Larger text" }).click();
+  assert.equal(await size(), 16);
+  await page.locator('.diff-file[data-path="api/cart.go"] .file-header').click();
 });
 
 await check("learn notes show the language being learned beside the known one", async () => {
@@ -257,7 +315,16 @@ await check("phone: diff first, explanation rises as a sheet", async () => {
   assert.equal(await phone.locator(".lesson-pane.sheet-open").count(), 1);
   assert.equal(await phone.locator(".lesson-content h1").innerText(), "API: clamp, then discount");
   await phone.screenshot({ path: join(out, "e2e-phone-sheet.png") });
-  await phone.getByRole("link", { name: "guard" }).click();
+  assert.ok(await phone.getByRole("button", { name: "Larger text" }).isVisible());
+  await phone.locator(".tour-step-head").nth(1).click();
+  await phone.waitForTimeout(400);
+  assert.equal(await phone.locator(".lesson-pane.sheet-open").count(), 0, "a tapped step shows its code");
+  assert.equal(await phone.locator(".code-line.highlighted").count(), 4);
+  await phone.locator('.diff-file[data-path="api/cart.go"] .explain-open-file').click().catch(() => {});
+  await phone.locator(".diff-file.selected .file-header").click();
+  await phone.locator('.diff-file[data-path="api/cart.go"] .file-header').click();
+  await phone.waitForTimeout(300);
+  await phone.getByRole("link", { name: "guard", exact: true }).click();
   await phone.waitForTimeout(400);
   assert.equal(await phone.locator(".lesson-pane.sheet-open").count(), 0, "jumping to code dismisses the sheet");
   assert.equal(await phone.locator(".code-line.highlighted").count(), 3);
@@ -277,11 +344,11 @@ if (process.argv.includes("--readme")) {
   await d.goto(demo);
   await d.waitForSelector(".reader");
   await d.locator('.diff-file[data-path="ratelimit/limiter.go"] .file-header').click();
-  await settledClick(d.locator(".learning-note summary").first());
-  await settledClick(d.locator(".anchor-link", { hasText: "refill" }));
-  await d.waitForTimeout(700);
-  await d.locator(".lesson-pane").evaluate((e) => e.scrollBy(0, e.querySelector(".lesson-diagram").getBoundingClientRect().top - e.getBoundingClientRect().top - 24));
   await d.waitForTimeout(300);
+  for (let i = 0; i < 5; i++) await d.keyboard.press("n");
+  await d.waitForTimeout(800);
+  await d.locator(".lesson-pane").evaluate((e) => e.scrollBy(0, e.querySelector(".tour").getBoundingClientRect().top - e.getBoundingClientRect().top - 16));
+  await d.waitForTimeout(400);
   await d.screenshot({ path: join(root, "docs/demo-desktop.png") });
   const p = await (await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })).newPage();
   await p.goto(demo);

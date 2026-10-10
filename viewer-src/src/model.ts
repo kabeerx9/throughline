@@ -1,4 +1,5 @@
 import type {
+  TourStep,
   Change,
   ChangedFile,
   FileLesson,
@@ -131,3 +132,30 @@ export function saveShowTests(show: boolean, store = safeStorage()) {
 
 export const lineLabel = (r: Highlight) =>
   `${r.side} L${r.startLine}${r.endLine > r.startLine ? "–" + r.endLine : ""}`;
+
+export const tourRange = (t: TourStep, path: string): Highlight => ({
+  path,
+  side: t.lines.side ?? "after",
+  startLine: t.lines.start,
+  endLine: t.lines.end,
+});
+
+/** Explanation text sizes in px; the default is the second step. */
+export const TEXT_SIZES = [14.5, 16, 17.5, 19];
+export const DEFAULT_TEXT_SIZE = 1;
+export const textSizeKey = "throughline-text-size";
+export function loadTextSize(store = safeStorage()) {
+  try {
+    const n = Number(store?.getItem(textSizeKey));
+    return store?.getItem(textSizeKey) !== null && Number.isInteger(n) && n >= 0 && n < TEXT_SIZES.length ? n : DEFAULT_TEXT_SIZE;
+  } catch {
+    return DEFAULT_TEXT_SIZE;
+  }
+}
+export function saveTextSize(n: number, store = safeStorage()) {
+  try {
+    store?.setItem(textSizeKey, String(n));
+  } catch {
+    /* ignore */
+  }
+}

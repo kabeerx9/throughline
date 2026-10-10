@@ -50,3 +50,14 @@ test("viewed and tests state persist per review", () => {
   assert.deepEqual([...loadViewed("r1", ["a"], broken)], []);
   assert.equal(loadShowTests(broken), true);
 });
+
+test("text size is bounded and remembered", async () => {
+  const { loadTextSize, saveTextSize, TEXT_SIZES, DEFAULT_TEXT_SIZE } = await import("../viewer-src/src/model.ts");
+  const store = memory();
+  assert.equal(loadTextSize(store), DEFAULT_TEXT_SIZE);
+  saveTextSize(3, store);
+  assert.equal(loadTextSize(store), 3);
+  store.setItem("throughline-text-size", "9");
+  assert.equal(loadTextSize(store), DEFAULT_TEXT_SIZE);
+  assert.ok(TEXT_SIZES[DEFAULT_TEXT_SIZE] < 18, "default is smaller than the old 18px");
+});

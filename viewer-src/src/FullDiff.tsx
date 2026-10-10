@@ -6,10 +6,15 @@ export function FullDiff({
   file,
   highlight,
   mentioned,
+  steps,
+  activeStep,
 }: {
   file: ChangedFile;
   highlight?: Highlight;
   mentioned: Highlight[];
+  /** The selected file's tour ranges: the step number marks each range's first row. */
+  steps?: Highlight[];
+  activeStep?: number | null;
 }) {
   const language = languageForPath(file.path);
   const own = mentioned.filter((m) => m.path === file.path);
@@ -36,6 +41,10 @@ export function FullDiff({
           {h.lines.map((line, i) => {
             const active = lit && inRange(line, lit);
             const marked = own.some((m) => inRange(line, m));
+            const stepAt = steps?.findIndex(
+              (r) => (r.side === "before" ? line.oldLine : line.newLine) === r.startLine && (r.side === "before" ? line.kind !== "add" : line.kind !== "delete"),
+            );
+            const isStep = stepAt !== undefined && stepAt >= 0;
             return (
               <div
                 key={i}
@@ -48,8 +57,11 @@ export function FullDiff({
                   (marked ? " mentioned" : "")
                 }
               >
-                <span class="reference-gutter" aria-hidden="true">
-                  {marked ? "•" : ""}
+                <span
+                  class={"reference-gutter" + (isStep ? " step-mark" + (stepAt === activeStep ? " active" : "") : "")}
+                  aria-hidden="true"
+                >
+                  {isStep ? stepAt + 1 : marked ? "•" : ""}
                 </span>
                 <span class="line-number">{line.oldLine ?? ""}</span>
                 <span class="line-number">{line.newLine ?? ""}</span>

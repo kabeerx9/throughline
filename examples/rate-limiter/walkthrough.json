@@ -98,7 +98,33 @@
      "note": "One limiter around the mux"
     }
    ],
-   "remember": "Middleware that wraps the mux applies to every route, including ones added later."
+   "remember": "Middleware that wraps the mux applies to every route, including ones added later.",
+   "tour": [
+    {
+     "lines": {
+      "start": 3,
+      "end": 8
+     },
+     "title": "Imports follow the wiring",
+     "text": "`os` is gone because `main` no longer reads the environment itself; `config.go` owns that now. The new import is the `ratelimit` package, which keeps the limiter testable on its own with no HTTP in sight."
+    },
+    {
+     "lines": {
+      "start": 10,
+      "end": 14
+     },
+     "title": "Configuration before anything listens",
+     "text": "`loadConfig` runs first and `log.Fatal` exits on an error, so a bad `RATE_LIMIT` stops the deploy at startup instead of serving traffic with a surprise limit. The old inline `ADDR` default moved into `loadConfig`, so every setting has one home."
+    },
+    {
+     "lines": {
+      "start": 20,
+      "end": 22
+     },
+     "title": "One limiter around the whole mux",
+     "text": "A single `Limiter` is shared by every request, which is what makes the budget per client rather than per connection. Wrapping the mux, not individual routes, means a route added later is limited automatically. The cost: health checks are limited too, and there is no allowlist. The startup log prints the effective limits, which is the first thing you check when a client reports 429s."
+    }
+   ]
   },
   {
    "path": "config.go",
@@ -130,6 +156,40 @@
       "startLine": 22,
       "endLine": 31
      }
+    }
+   ],
+   "tour": [
+    {
+     "lines": {
+      "start": 9,
+      "end": 13
+     },
+     "title": "Settings as a typed struct",
+     "text": "Rate and burst are `float64` because the bucket does fractional arithmetic (tokens refill continuously). Keeping them in one struct means `main` passes typed values, never raw strings, to the limiter."
+    },
+    {
+     "lines": {
+      "start": 17,
+      "end": 21
+     },
+     "title": "Defaults, then the environment",
+     "text": "Defaults are written once, in the literal. Each variable only overrides when it's set, so an unset `ADDR` keeps `:8080` and a deploy with no new variables behaves sensibly."
+    },
+    {
+     "lines": {
+      "start": 22,
+      "end": 32
+     },
+     "title": "Parse strictly, reject non-positive values",
+     "text": "The loop writes through a pointer into the struct, so both numeric settings share one parse-and-validate path. A value that doesn't parse, or is zero or negative, returns an error naming the variable and the bad value. A zero rate would make `Allow` divide by zero when computing the wait (an infinite float, then a nonsense `Duration`), so this check protects the limiter as well as the operator."
+    },
+    {
+     "lines": {
+      "start": 33,
+      "end": 36
+     },
+     "title": "Burst must hold one whole token",
+     "text": "A burst of 0.5 parses fine but would make every request fail: the bucket could never reach the 1 token a request costs. This is a cross-field rule the loop can't express, so it gets its own check after parsing."
     }
    ]
   },
@@ -164,12 +224,46 @@
       "endLine": 24
      }
     }
+   ],
+   "tour": [
+    {
+     "lines": {
+      "start": 14,
+      "end": 16
+     },
+     "title": "Wrap the next handler and ask the limiter",
+     "text": "`rateLimit` returns a new handler that closes over the limiter and the wrapped mux. Every request calls `Allow` exactly once, keyed by client IP, before any route matching. That ordering means rejected requests cost almost nothing: no body is read and no store lock is taken."
+    },
+    {
+     "lines": {
+      "start": 17,
+      "end": 21
+     },
+     "title": "Reject: Retry-After, 429, stop",
+     "text": "The header must be set before `http.Error` writes the status, because headers can't change once the body starts. The wait is rounded **up** to whole seconds, as `Retry-After` requires; rounding down would invite an immediate retry that fails again. The `return` is what stops the chain: forget it and the request is both rejected and served."
+    },
+    {
+     "lines": {
+      "start": 22,
+      "end": 24
+     },
+     "title": "Allow: pass the request on unchanged",
+     "text": "On success the middleware is invisible: same writer, same request. Nothing is recorded after the handler runs, so slow handlers don't affect the budget; it counts requests, not time or bytes."
+    },
+    {
+     "lines": {
+      "start": 28,
+      "end": 34
+     },
+     "title": "Who is the client?",
+     "text": "The key is the TCP peer's IP from `RemoteAddr`, with the port stripped so each new connection from one machine shares a bucket. If parsing fails, the raw address is used rather than rejecting the request. Behind a proxy this is the proxy's IP for everyone, the biggest operational caveat in the change."
+    }
    ]
   },
   {
    "path": "ratelimit/limiter.go",
    "role": "The bucket: lazy refill under one mutex",
-   "explanation": "Each key gets a `bucket` with a token count and the time it was last touched. A new key starts **full**, so a client's first burst is allowed ([new bucket](#new)).\n\nRefill is lazy ([refill](#refill)): instead of a timer per client, `Allow` adds `elapsed × rate` tokens, capped at the burst, whenever the key is seen. Then it spends a token or computes how long until one arrives ([spend](#spend)). The `now` field is a seam so tests can control the clock.\n\nThe whole method holds `l.mu`, because `net/http` calls it from many goroutines at once. One mutex for all keys is simple and fast enough for a small service; under heavy contention you would shard the map. The question a reviewer should ask: buckets are never deleted, so memory grows with every distinct IP. (Wall-clock jumps are not a problem: `time.Now` carries a monotonic reading, and `Sub` uses it.)",
+   "explanation": "Each key gets a bucket with a token count and the time it was last touched. A new key starts **full** ([new bucket](#new)); refill is lazy ([refill](#refill)), so there are no timers, just arithmetic on elapsed time whenever the key is seen. Then it spends a token or says how long until one arrives ([spend](#spend)).\n\nOne mutex guards every key, because `net/http` calls `Allow` from many goroutines at once. Simple and fast enough for a small service; under heavy contention you would shard the map.",
    "anchors": [
     {
      "id": "new",
@@ -220,6 +314,56 @@
       "startLine": 31,
       "endLine": 31
      }
+    }
+   ],
+   "tour": [
+    {
+     "lines": {
+      "start": 11,
+      "end": 18
+     },
+     "title": "State: settings, a clock seam, and a guarded map",
+     "text": "`now` is a function field so tests can freeze time. `mu` guards `buckets`, and the fields above it are never written after `New`, so they're safe to read without the lock. Unexported fields mean callers can't change the rate under a running limiter."
+    },
+    {
+     "lines": {
+      "start": 20,
+      "end": 27
+     },
+     "title": "A bucket is two numbers",
+     "text": "Each client costs one small struct: tokens left and when they were last updated. That is all lazy refill needs. The map is never pruned, so memory grows with every distinct key; an idle-bucket sweep is the obvious follow-up."
+    },
+    {
+     "lines": {
+      "start": 31,
+      "end": 33
+     },
+     "title": "Hold the lock for the whole decision",
+     "text": "Read, refill, spend and write happen under one lock. Locking only the map read would let two goroutines both see one token and both spend it, which is exactly the overspend the concurrency test checks. `defer` releases the lock on every return path."
+    },
+    {
+     "lines": {
+      "start": 35,
+      "end": 40
+     },
+     "title": "First sight: a full bucket",
+     "text": "A new key starts with `burst` tokens, so a quiet client can send a burst immediately. The alternative, starting empty, would reject a client's very first request."
+    },
+    {
+     "lines": {
+      "start": 41,
+      "end": 43
+     },
+     "title": "Refill by elapsed time, capped",
+     "text": "Tokens grow by `elapsed × rate` since this key was last seen, capped at the burst so a long-idle client can't bank unlimited requests. Elapsed time uses Go's monotonic clock reading, so a wall-clock change can't refill or drain buckets. Updating `last` here, even on rejection, is what makes the next refill correct."
+    },
+    {
+     "lines": {
+      "start": 45,
+      "end": 50
+     },
+     "title": "Spend, or say how long to wait",
+     "text": "With at least one token, spend it and allow. Otherwise the wait is the missing fraction of a token divided by the rate: with 0 tokens at 5/s that is 200 ms. A rejection spends nothing, so a client that retries too early is never pushed further into debt."
     }
    ]
   },

@@ -89,6 +89,12 @@ export type Overview = {
   quiz?: QuizQuestion[];
   notes?: Note[];
 };
+/** One step of a file's code tour: a block of the diff and what it does. */
+export type TourStep = {
+  lines: { start: number; end: number; side?: Side };
+  title?: string;
+  text: string;
+};
 export type FileLesson = {
   path: string;
   role: string;
@@ -98,6 +104,7 @@ export type FileLesson = {
   remember?: string;
   anchors?: Anchor[];
   notes?: Note[];
+  tour?: TourStep[];
 };
 export type Walkthrough = {
   title: string;
