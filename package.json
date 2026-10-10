@@ -1,0 +1,32 @@
+{
+  "name": "throughline-dev",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Development workspace for the Throughline agent skill. The installable skill is skills/throughline.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vite --config viewer-src/vite.config.ts",
+    "build": "vite build --config viewer-src/vite.config.ts && node examples/build-demo.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:e2e": "node tests/e2e/browser.mjs",
+    "typecheck": "tsc -p viewer-src/tsconfig.json",
+    "format": "prettier --write viewer-src tests examples/*.mjs",
+    "format:check": "prettier --check viewer-src tests examples/*.mjs"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^26.6.5",
+    "@types/prismjs": "^1.26.6",
+    "playwright-core": "^1.64.0",
+    "preact": "^11.0.1",
+    "prettier": "^3.9.10",
+    "prismjs": "^1.30.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vite-plugin-singlefile": "^2.3.3"
+  }
+}
