@@ -2,6 +2,8 @@
 
 Your agent wrote the change. Throughline helps you understand it well enough to debug it and defend it in review.
 
+![Throughline in use: an overview diagram, a file's code tour, a Learn note and the Tests toggle](docs/demo.gif)
+
 Throughline is an agent skill. You ask "walk me through my changes in Throughline", and your agent writes a walkthrough of the git change. It then opens a single HTML file:
 
 - **Left pane:** the full diff, VS Code style. Each changed file is a collapsible section, ordered the way the explanation flows. Files the walkthrough skips come last, under "Not explained".
