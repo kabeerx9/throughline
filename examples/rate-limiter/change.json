@@ -1,0 +1,1472 @@
+{
+ "version": 1,
+ "id": "demo-notes-rate-limit",
+ "createdAt": "2026-01-01T00:00:00.000Z",
+ "repos": [
+  {
+   "name": "notes",
+   "root": "/home/you/notes",
+   "mode": "uncommitted",
+   "branch": "main",
+   "base": "24a9c412e6d24cfc766a71dafc84ab83b67e25d1",
+   "baseLabel": "HEAD",
+   "head": "working tree"
+  }
+ ],
+ "files": [
+  {
+   "path": "README.md",
+   "status": "modified",
+   "additions": 15,
+   "deletions": 3,
+   "hunks": [
+    {
+     "oldStart": 9,
+     "oldLines": 7,
+     "newStart": 9,
+     "newLines": 19,
+     "lines": [
+      {
+       "kind": "context",
+       "text": "```",
+       "oldLine": 9,
+       "newLine": 9
+      },
+      {
+       "kind": "context",
+       "text": "",
+       "oldLine": 10,
+       "newLine": 10
+      },
+      {
+       "kind": "context",
+       "text": "## Configuration",
+       "oldLine": 11,
+       "newLine": 11
+      },
+      {
+       "kind": "context",
+       "text": "",
+       "oldLine": 12,
+       "newLine": 12
+      },
+      {
+       "kind": "delete",
+       "text": "| Variable | Default | Meaning        |",
+       "oldLine": 13
+      },
+      {
+       "kind": "delete",
+       "text": "| -------- | ------- | -------------- |",
+       "oldLine": 14
+      },
+      {
+       "kind": "delete",
+       "text": "| `ADDR`   | `:8080` | Listen address |",
+       "oldLine": 15
+      },
+      {
+       "kind": "add",
+       "text": "| Variable     | Default | Meaning                                    |",
+       "newLine": 13
+      },
+      {
+       "kind": "add",
+       "text": "| ------------ | ------- | ------------------------------------------ |",
+       "newLine": 14
+      },
+      {
+       "kind": "add",
+       "text": "| `ADDR`       | `:8080` | Listen address                             |",
+       "newLine": 15
+      },
+      {
+       "kind": "add",
+       "text": "| `RATE_LIMIT` | `5`     | Requests per second, per client IP         |",
+       "newLine": 16
+      },
+      {
+       "kind": "add",
+       "text": "| `RATE_BURST` | `10`    | Requests a quiet client may send at once   |",
+       "newLine": 17
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 18
+      },
+      {
+       "kind": "add",
+       "text": "## Rate limiting",
+       "newLine": 19
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 20
+      },
+      {
+       "kind": "add",
+       "text": "Each client IP gets a token bucket. Over the limit, the API answers",
+       "newLine": 21
+      },
+      {
+       "kind": "add",
+       "text": "`429 Too Many Requests` with a `Retry-After` header in whole seconds.",
+       "newLine": 22
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 23
+      },
+      {
+       "kind": "add",
+       "text": "Limits are per process and kept in memory: two replicas allow twice the rate,",
+       "newLine": 24
+      },
+      {
+       "kind": "add",
+       "text": "and a restart forgets every bucket. Behind a reverse proxy all clients share",
+       "newLine": 25
+      },
+      {
+       "kind": "add",
+       "text": "the proxy's IP, so put the limiter at the proxy or trust a forwarded header",
+       "newLine": 26
+      },
+      {
+       "kind": "add",
+       "text": "there first.",
+       "newLine": 27
+      }
+     ]
+    }
+   ],
+   "isTest": false,
+   "repo": "notes"
+  },
+  {
+   "path": "config.go",
+   "status": "added",
+   "additions": 37,
+   "deletions": 0,
+   "hunks": [
+    {
+     "oldStart": 0,
+     "oldLines": 0,
+     "newStart": 1,
+     "newLines": 37,
+     "lines": [
+      {
+       "kind": "add",
+       "text": "package main",
+       "newLine": 1
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 2
+      },
+      {
+       "kind": "add",
+       "text": "import (",
+       "newLine": 3
+      },
+      {
+       "kind": "add",
+       "text": "\t\"fmt\"",
+       "newLine": 4
+      },
+      {
+       "kind": "add",
+       "text": "\t\"os\"",
+       "newLine": 5
+      },
+      {
+       "kind": "add",
+       "text": "\t\"strconv\"",
+       "newLine": 6
+      },
+      {
+       "kind": "add",
+       "text": ")",
+       "newLine": 7
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 8
+      },
+      {
+       "kind": "add",
+       "text": "type config struct {",
+       "newLine": 9
+      },
+      {
+       "kind": "add",
+       "text": "\tAddr      string",
+       "newLine": 10
+      },
+      {
+       "kind": "add",
+       "text": "\tRateLimit float64 // requests per second, per client",
+       "newLine": 11
+      },
+      {
+       "kind": "add",
+       "text": "\tBurst     float64 // requests a quiet client may send at once",
+       "newLine": 12
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 13
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 14
+      },
+      {
+       "kind": "add",
+       "text": "// loadConfig reads the environment and fails on bad values instead of",
+       "newLine": 15
+      },
+      {
+       "kind": "add",
+       "text": "// silently falling back, so a typo cannot switch rate limiting off.",
+       "newLine": 16
+      },
+      {
+       "kind": "add",
+       "text": "func loadConfig() (config, error) {",
+       "newLine": 17
+      },
+      {
+       "kind": "add",
+       "text": "\tc := config{Addr: \":8080\", RateLimit: 5, Burst: 10}",
+       "newLine": 18
+      },
+      {
+       "kind": "add",
+       "text": "\tif v := os.Getenv(\"ADDR\"); v != \"\" {",
+       "newLine": 19
+      },
+      {
+       "kind": "add",
+       "text": "\t\tc.Addr = v",
+       "newLine": 20
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 21
+      },
+      {
+       "kind": "add",
+       "text": "\tfor name, dst := range map[string]*float64{\"RATE_LIMIT\": &c.RateLimit, \"RATE_BURST\": &c.Burst} {",
+       "newLine": 22
+      },
+      {
+       "kind": "add",
+       "text": "\t\tv := os.Getenv(name)",
+       "newLine": 23
+      },
+      {
+       "kind": "add",
+       "text": "\t\tif v == \"\" {",
+       "newLine": 24
+      },
+      {
+       "kind": "add",
+       "text": "\t\t\tcontinue",
+       "newLine": 25
+      },
+      {
+       "kind": "add",
+       "text": "\t\t}",
+       "newLine": 26
+      },
+      {
+       "kind": "add",
+       "text": "\t\tf, err := strconv.ParseFloat(v, 64)",
+       "newLine": 27
+      },
+      {
+       "kind": "add",
+       "text": "\t\tif err != nil || f <= 0 {",
+       "newLine": 28
+      },
+      {
+       "kind": "add",
+       "text": "\t\t\treturn c, fmt.Errorf(\"%s must be a positive number, got %q\", name, v)",
+       "newLine": 29
+      },
+      {
+       "kind": "add",
+       "text": "\t\t}",
+       "newLine": 30
+      },
+      {
+       "kind": "add",
+       "text": "\t\t*dst = f",
+       "newLine": 31
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 32
+      },
+      {
+       "kind": "add",
+       "text": "\tif c.Burst < 1 {",
+       "newLine": 33
+      },
+      {
+       "kind": "add",
+       "text": "\t\treturn c, fmt.Errorf(\"RATE_BURST must be at least 1, got %g\", c.Burst)",
+       "newLine": 34
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 35
+      },
+      {
+       "kind": "add",
+       "text": "\treturn c, nil",
+       "newLine": 36
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 37
+      }
+     ]
+    }
+   ],
+   "isTest": false,
+   "repo": "notes"
+  },
+  {
+   "path": "main.go",
+   "status": "modified",
+   "additions": 8,
+   "deletions": 6,
+   "hunks": [
+    {
+     "oldStart": 2,
+     "oldLines": 20,
+     "newStart": 2,
+     "newLines": 22,
+     "lines": [
+      {
+       "kind": "context",
+       "text": "",
+       "oldLine": 2,
+       "newLine": 2
+      },
+      {
+       "kind": "context",
+       "text": "import (",
+       "oldLine": 3,
+       "newLine": 3
+      },
+      {
+       "kind": "context",
+       "text": "\t\"log\"",
+       "oldLine": 4,
+       "newLine": 4
+      },
+      {
+       "kind": "context",
+       "text": "\t\"net/http\"",
+       "oldLine": 5,
+       "newLine": 5
+      },
+      {
+       "kind": "delete",
+       "text": "\t\"os\"",
+       "oldLine": 6
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 6
+      },
+      {
+       "kind": "add",
+       "text": "\t\"example.com/notes/ratelimit\"",
+       "newLine": 7
+      },
+      {
+       "kind": "context",
+       "text": ")",
+       "oldLine": 7,
+       "newLine": 8
+      },
+      {
+       "kind": "context",
+       "text": "",
+       "oldLine": 8,
+       "newLine": 9
+      },
+      {
+       "kind": "context",
+       "text": "func main() {",
+       "oldLine": 9,
+       "newLine": 10
+      },
+      {
+       "kind": "delete",
+       "text": "\taddr := os.Getenv(\"ADDR\")",
+       "oldLine": 10
+      },
+      {
+       "kind": "delete",
+       "text": "\tif addr == \"\" {",
+       "oldLine": 11
+      },
+      {
+       "kind": "delete",
+       "text": "\t\taddr = \":8080\"",
+       "oldLine": 12
+      },
+      {
+       "kind": "add",
+       "text": "\tcfg, err := loadConfig()",
+       "newLine": 11
+      },
+      {
+       "kind": "add",
+       "text": "\tif err != nil {",
+       "newLine": 12
+      },
+      {
+       "kind": "add",
+       "text": "\t\tlog.Fatal(err)",
+       "newLine": 13
+      },
+      {
+       "kind": "context",
+       "text": "\t}",
+       "oldLine": 13,
+       "newLine": 14
+      },
+      {
+       "kind": "context",
+       "text": "\tstore := NewStore()",
+       "oldLine": 14,
+       "newLine": 15
+      },
+      {
+       "kind": "context",
+       "text": "\tmux := http.NewServeMux()",
+       "oldLine": 15,
+       "newLine": 16
+      },
+      {
+       "kind": "context",
+       "text": "\tmux.HandleFunc(\"GET /notes\", store.List)",
+       "oldLine": 16,
+       "newLine": 17
+      },
+      {
+       "kind": "context",
+       "text": "\tmux.HandleFunc(\"POST /notes\", store.Create)",
+       "oldLine": 17,
+       "newLine": 18
+      },
+      {
+       "kind": "context",
+       "text": "",
+       "oldLine": 18,
+       "newLine": 19
+      },
+      {
+       "kind": "delete",
+       "text": "\tlog.Printf(\"listening on %s\", addr)",
+       "oldLine": 19
+      },
+      {
+       "kind": "delete",
+       "text": "\tlog.Fatal(http.ListenAndServe(addr, mux))",
+       "oldLine": 20
+      },
+      {
+       "kind": "add",
+       "text": "\tlimiter := ratelimit.New(cfg.RateLimit, cfg.Burst)",
+       "newLine": 20
+      },
+      {
+       "kind": "add",
+       "text": "\tlog.Printf(\"listening on %s (%g req/s per client, burst %g)\", cfg.Addr, cfg.RateLimit, cfg.Burst)",
+       "newLine": 21
+      },
+      {
+       "kind": "add",
+       "text": "\tlog.Fatal(http.ListenAndServe(cfg.Addr, rateLimit(limiter, mux)))",
+       "newLine": 22
+      },
+      {
+       "kind": "context",
+       "text": "}",
+       "oldLine": 21,
+       "newLine": 23
+      }
+     ]
+    }
+   ],
+   "isTest": false,
+   "repo": "notes"
+  },
+  {
+   "path": "middleware.go",
+   "status": "added",
+   "additions": 34,
+   "deletions": 0,
+   "hunks": [
+    {
+     "oldStart": 0,
+     "oldLines": 0,
+     "newStart": 1,
+     "newLines": 34,
+     "lines": [
+      {
+       "kind": "add",
+       "text": "package main",
+       "newLine": 1
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 2
+      },
+      {
+       "kind": "add",
+       "text": "import (",
+       "newLine": 3
+      },
+      {
+       "kind": "add",
+       "text": "\t\"math\"",
+       "newLine": 4
+      },
+      {
+       "kind": "add",
+       "text": "\t\"net\"",
+       "newLine": 5
+      },
+      {
+       "kind": "add",
+       "text": "\t\"net/http\"",
+       "newLine": 6
+      },
+      {
+       "kind": "add",
+       "text": "\t\"strconv\"",
+       "newLine": 7
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 8
+      },
+      {
+       "kind": "add",
+       "text": "\t\"example.com/notes/ratelimit\"",
+       "newLine": 9
+      },
+      {
+       "kind": "add",
+       "text": ")",
+       "newLine": 10
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 11
+      },
+      {
+       "kind": "add",
+       "text": "// rateLimit rejects requests over the caller's budget with 429 and a",
+       "newLine": 12
+      },
+      {
+       "kind": "add",
+       "text": "// Retry-After header, before they reach any handler.",
+       "newLine": 13
+      },
+      {
+       "kind": "add",
+       "text": "func rateLimit(l *ratelimit.Limiter, next http.Handler) http.Handler {",
+       "newLine": 14
+      },
+      {
+       "kind": "add",
+       "text": "\treturn http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {",
+       "newLine": 15
+      },
+      {
+       "kind": "add",
+       "text": "\t\tok, wait := l.Allow(clientKey(r))",
+       "newLine": 16
+      },
+      {
+       "kind": "add",
+       "text": "\t\tif !ok {",
+       "newLine": 17
+      },
+      {
+       "kind": "add",
+       "text": "\t\t\tw.Header().Set(\"Retry-After\", strconv.Itoa(int(math.Ceil(wait.Seconds()))))",
+       "newLine": 18
+      },
+      {
+       "kind": "add",
+       "text": "\t\t\thttp.Error(w, \"rate limit exceeded\", http.StatusTooManyRequests)",
+       "newLine": 19
+      },
+      {
+       "kind": "add",
+       "text": "\t\t\treturn",
+       "newLine": 20
+      },
+      {
+       "kind": "add",
+       "text": "\t\t}",
+       "newLine": 21
+      },
+      {
+       "kind": "add",
+       "text": "\t\tnext.ServeHTTP(w, r)",
+       "newLine": 22
+      },
+      {
+       "kind": "add",
+       "text": "\t})",
+       "newLine": 23
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 24
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 25
+      },
+      {
+       "kind": "add",
+       "text": "// clientKey identifies the caller by IP address. Behind a reverse proxy every",
+       "newLine": 26
+      },
+      {
+       "kind": "add",
+       "text": "// request shares the proxy's address; see the README.",
+       "newLine": 27
+      },
+      {
+       "kind": "add",
+       "text": "func clientKey(r *http.Request) string {",
+       "newLine": 28
+      },
+      {
+       "kind": "add",
+       "text": "\thost, _, err := net.SplitHostPort(r.RemoteAddr)",
+       "newLine": 29
+      },
+      {
+       "kind": "add",
+       "text": "\tif err != nil {",
+       "newLine": 30
+      },
+      {
+       "kind": "add",
+       "text": "\t\treturn r.RemoteAddr",
+       "newLine": 31
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 32
+      },
+      {
+       "kind": "add",
+       "text": "\treturn host",
+       "newLine": 33
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 34
+      }
+     ]
+    }
+   ],
+   "isTest": false,
+   "repo": "notes"
+  },
+  {
+   "path": "middleware_test.go",
+   "status": "added",
+   "additions": 29,
+   "deletions": 0,
+   "hunks": [
+    {
+     "oldStart": 0,
+     "oldLines": 0,
+     "newStart": 1,
+     "newLines": 29,
+     "lines": [
+      {
+       "kind": "add",
+       "text": "package main",
+       "newLine": 1
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 2
+      },
+      {
+       "kind": "add",
+       "text": "import (",
+       "newLine": 3
+      },
+      {
+       "kind": "add",
+       "text": "\t\"net/http\"",
+       "newLine": 4
+      },
+      {
+       "kind": "add",
+       "text": "\t\"net/http/httptest\"",
+       "newLine": 5
+      },
+      {
+       "kind": "add",
+       "text": "\t\"testing\"",
+       "newLine": 6
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 7
+      },
+      {
+       "kind": "add",
+       "text": "\t\"example.com/notes/ratelimit\"",
+       "newLine": 8
+      },
+      {
+       "kind": "add",
+       "text": ")",
+       "newLine": 9
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 10
+      },
+      {
+       "kind": "add",
+       "text": "func TestRateLimitReturns429WithRetryAfter(t *testing.T) {",
+       "newLine": 11
+      },
+      {
+       "kind": "add",
+       "text": "\tok := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})",
+       "newLine": 12
+      },
+      {
+       "kind": "add",
+       "text": "\th := rateLimit(ratelimit.New(1, 1), ok)",
+       "newLine": 13
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 14
+      },
+      {
+       "kind": "add",
+       "text": "\tfirst := httptest.NewRecorder()",
+       "newLine": 15
+      },
+      {
+       "kind": "add",
+       "text": "\th.ServeHTTP(first, httptest.NewRequest(\"GET\", \"/notes\", nil))",
+       "newLine": 16
+      },
+      {
+       "kind": "add",
+       "text": "\tif first.Code != http.StatusOK {",
+       "newLine": 17
+      },
+      {
+       "kind": "add",
+       "text": "\t\tt.Fatalf(\"first request: got %d, want 200\", first.Code)",
+       "newLine": 18
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 19
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 20
+      },
+      {
+       "kind": "add",
+       "text": "\tsecond := httptest.NewRecorder()",
+       "newLine": 21
+      },
+      {
+       "kind": "add",
+       "text": "\th.ServeHTTP(second, httptest.NewRequest(\"GET\", \"/notes\", nil))",
+       "newLine": 22
+      },
+      {
+       "kind": "add",
+       "text": "\tif second.Code != http.StatusTooManyRequests {",
+       "newLine": 23
+      },
+      {
+       "kind": "add",
+       "text": "\t\tt.Fatalf(\"second request: got %d, want 429\", second.Code)",
+       "newLine": 24
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 25
+      },
+      {
+       "kind": "add",
+       "text": "\tif got := second.Header().Get(\"Retry-After\"); got != \"1\" {",
+       "newLine": 26
+      },
+      {
+       "kind": "add",
+       "text": "\t\tt.Fatalf(\"Retry-After = %q, want \\\"1\\\"\", got)",
+       "newLine": 27
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 28
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 29
+      }
+     ]
+    }
+   ],
+   "isTest": true,
+   "repo": "notes"
+  },
+  {
+   "path": "ratelimit/limiter.go",
+   "status": "added",
+   "additions": 51,
+   "deletions": 0,
+   "hunks": [
+    {
+     "oldStart": 0,
+     "oldLines": 0,
+     "newStart": 1,
+     "newLines": 51,
+     "lines": [
+      {
+       "kind": "add",
+       "text": "// Package ratelimit implements a per-client token bucket.",
+       "newLine": 1
+      },
+      {
+       "kind": "add",
+       "text": "package ratelimit",
+       "newLine": 2
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 3
+      },
+      {
+       "kind": "add",
+       "text": "import (",
+       "newLine": 4
+      },
+      {
+       "kind": "add",
+       "text": "\t\"sync\"",
+       "newLine": 5
+      },
+      {
+       "kind": "add",
+       "text": "\t\"time\"",
+       "newLine": 6
+      },
+      {
+       "kind": "add",
+       "text": ")",
+       "newLine": 7
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 8
+      },
+      {
+       "kind": "add",
+       "text": "// Limiter gives each key a bucket that holds up to Burst tokens and refills",
+       "newLine": 9
+      },
+      {
+       "kind": "add",
+       "text": "// at Rate tokens per second. A request spends one token.",
+       "newLine": 10
+      },
+      {
+       "kind": "add",
+       "text": "type Limiter struct {",
+       "newLine": 11
+      },
+      {
+       "kind": "add",
+       "text": "\trate  float64",
+       "newLine": 12
+      },
+      {
+       "kind": "add",
+       "text": "\tburst float64",
+       "newLine": 13
+      },
+      {
+       "kind": "add",
+       "text": "\tnow   func() time.Time // replaced in tests",
+       "newLine": 14
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 15
+      },
+      {
+       "kind": "add",
+       "text": "\tmu      sync.Mutex",
+       "newLine": 16
+      },
+      {
+       "kind": "add",
+       "text": "\tbuckets map[string]*bucket",
+       "newLine": 17
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 18
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 19
+      },
+      {
+       "kind": "add",
+       "text": "type bucket struct {",
+       "newLine": 20
+      },
+      {
+       "kind": "add",
+       "text": "\ttokens float64",
+       "newLine": 21
+      },
+      {
+       "kind": "add",
+       "text": "\tlast   time.Time",
+       "newLine": 22
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 23
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 24
+      },
+      {
+       "kind": "add",
+       "text": "func New(rate, burst float64) *Limiter {",
+       "newLine": 25
+      },
+      {
+       "kind": "add",
+       "text": "\treturn &Limiter{rate: rate, burst: burst, now: time.Now, buckets: map[string]*bucket{}}",
+       "newLine": 26
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 27
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 28
+      },
+      {
+       "kind": "add",
+       "text": "// Allow reports whether key may make a request now. When it may not, it also",
+       "newLine": 29
+      },
+      {
+       "kind": "add",
+       "text": "// returns how long until the next token arrives.",
+       "newLine": 30
+      },
+      {
+       "kind": "add",
+       "text": "func (l *Limiter) Allow(key string) (bool, time.Duration) {",
+       "newLine": 31
+      },
+      {
+       "kind": "add",
+       "text": "\tl.mu.Lock()",
+       "newLine": 32
+      },
+      {
+       "kind": "add",
+       "text": "\tdefer l.mu.Unlock()",
+       "newLine": 33
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 34
+      },
+      {
+       "kind": "add",
+       "text": "\tnow := l.now()",
+       "newLine": 35
+      },
+      {
+       "kind": "add",
+       "text": "\tb, ok := l.buckets[key]",
+       "newLine": 36
+      },
+      {
+       "kind": "add",
+       "text": "\tif !ok {",
+       "newLine": 37
+      },
+      {
+       "kind": "add",
+       "text": "\t\tb = &bucket{tokens: l.burst, last: now}",
+       "newLine": 38
+      },
+      {
+       "kind": "add",
+       "text": "\t\tl.buckets[key] = b",
+       "newLine": 39
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 40
+      },
+      {
+       "kind": "add",
+       "text": "\t// Refill lazily: no timer per client, just the time since the last call.",
+       "newLine": 41
+      },
+      {
+       "kind": "add",
+       "text": "\tb.tokens = min(l.burst, b.tokens+now.Sub(b.last).Seconds()*l.rate)",
+       "newLine": 42
+      },
+      {
+       "kind": "add",
+       "text": "\tb.last = now",
+       "newLine": 43
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 44
+      },
+      {
+       "kind": "add",
+       "text": "\tif b.tokens >= 1 {",
+       "newLine": 45
+      },
+      {
+       "kind": "add",
+       "text": "\t\tb.tokens--",
+       "newLine": 46
+      },
+      {
+       "kind": "add",
+       "text": "\t\treturn true, 0",
+       "newLine": 47
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 48
+      },
+      {
+       "kind": "add",
+       "text": "\twait := time.Duration((1 - b.tokens) / l.rate * float64(time.Second))",
+       "newLine": 49
+      },
+      {
+       "kind": "add",
+       "text": "\treturn false, wait",
+       "newLine": 50
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 51
+      }
+     ]
+    }
+   ],
+   "isTest": false,
+   "repo": "notes"
+  },
+  {
+   "path": "ratelimit/limiter_test.go",
+   "status": "added",
+   "additions": 61,
+   "deletions": 0,
+   "hunks": [
+    {
+     "oldStart": 0,
+     "oldLines": 0,
+     "newStart": 1,
+     "newLines": 61,
+     "lines": [
+      {
+       "kind": "add",
+       "text": "package ratelimit",
+       "newLine": 1
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 2
+      },
+      {
+       "kind": "add",
+       "text": "import (",
+       "newLine": 3
+      },
+      {
+       "kind": "add",
+       "text": "\t\"sync\"",
+       "newLine": 4
+      },
+      {
+       "kind": "add",
+       "text": "\t\"sync/atomic\"",
+       "newLine": 5
+      },
+      {
+       "kind": "add",
+       "text": "\t\"testing\"",
+       "newLine": 6
+      },
+      {
+       "kind": "add",
+       "text": "\t\"time\"",
+       "newLine": 7
+      },
+      {
+       "kind": "add",
+       "text": ")",
+       "newLine": 8
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 9
+      },
+      {
+       "kind": "add",
+       "text": "func fixedClock(l *Limiter, t *time.Time) { l.now = func() time.Time { return *t } }",
+       "newLine": 10
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 11
+      },
+      {
+       "kind": "add",
+       "text": "func TestBurstThenRefill(t *testing.T) {",
+       "newLine": 12
+      },
+      {
+       "kind": "add",
+       "text": "\tclock := time.Unix(0, 0)",
+       "newLine": 13
+      },
+      {
+       "kind": "add",
+       "text": "\tl := New(2, 3) // 2 tokens per second, burst of 3",
+       "newLine": 14
+      },
+      {
+       "kind": "add",
+       "text": "\tfixedClock(l, &clock)",
+       "newLine": 15
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 16
+      },
+      {
+       "kind": "add",
+       "text": "\tfor i := 1; i <= 3; i++ {",
+       "newLine": 17
+      },
+      {
+       "kind": "add",
+       "text": "\t\tif ok, _ := l.Allow(\"a\"); !ok {",
+       "newLine": 18
+      },
+      {
+       "kind": "add",
+       "text": "\t\t\tt.Fatalf(\"request %d: want allowed within the burst\", i)",
+       "newLine": 19
+      },
+      {
+       "kind": "add",
+       "text": "\t\t}",
+       "newLine": 20
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 21
+      },
+      {
+       "kind": "add",
+       "text": "\tok, wait := l.Allow(\"a\")",
+       "newLine": 22
+      },
+      {
+       "kind": "add",
+       "text": "\tif ok || wait != 500*time.Millisecond {",
+       "newLine": 23
+      },
+      {
+       "kind": "add",
+       "text": "\t\tt.Fatalf(\"4th request: got (%v, %v), want (false, 500ms)\", ok, wait)",
+       "newLine": 24
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 25
+      },
+      {
+       "kind": "add",
+       "text": "\tclock = clock.Add(500 * time.Millisecond)",
+       "newLine": 26
+      },
+      {
+       "kind": "add",
+       "text": "\tif ok, _ := l.Allow(\"a\"); !ok {",
+       "newLine": 27
+      },
+      {
+       "kind": "add",
+       "text": "\t\tt.Fatal(\"after 500ms: want one refilled token\")",
+       "newLine": 28
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 29
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 30
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 31
+      },
+      {
+       "kind": "add",
+       "text": "func TestKeysHaveTheirOwnBuckets(t *testing.T) {",
+       "newLine": 32
+      },
+      {
+       "kind": "add",
+       "text": "\tl := New(1, 1)",
+       "newLine": 33
+      },
+      {
+       "kind": "add",
+       "text": "\tl.Allow(\"a\")",
+       "newLine": 34
+      },
+      {
+       "kind": "add",
+       "text": "\tif ok, _ := l.Allow(\"b\"); !ok {",
+       "newLine": 35
+      },
+      {
+       "kind": "add",
+       "text": "\t\tt.Fatal(\"b must not share a's bucket\")",
+       "newLine": 36
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 37
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 38
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 39
+      },
+      {
+       "kind": "add",
+       "text": "// Run with -race: many goroutines must never spend more than the burst.",
+       "newLine": 40
+      },
+      {
+       "kind": "add",
+       "text": "func TestConcurrentCallersNeverOverspend(t *testing.T) {",
+       "newLine": 41
+      },
+      {
+       "kind": "add",
+       "text": "\tclock := time.Unix(0, 0)",
+       "newLine": 42
+      },
+      {
+       "kind": "add",
+       "text": "\tl := New(0.001, 50)",
+       "newLine": 43
+      },
+      {
+       "kind": "add",
+       "text": "\tfixedClock(l, &clock)",
+       "newLine": 44
+      },
+      {
+       "kind": "add",
+       "text": "",
+       "newLine": 45
+      },
+      {
+       "kind": "add",
+       "text": "\tvar allowed atomic.Int64",
+       "newLine": 46
+      },
+      {
+       "kind": "add",
+       "text": "\tvar wg sync.WaitGroup",
+       "newLine": 47
+      },
+      {
+       "kind": "add",
+       "text": "\tfor i := 0; i < 200; i++ {",
+       "newLine": 48
+      },
+      {
+       "kind": "add",
+       "text": "\t\twg.Add(1)",
+       "newLine": 49
+      },
+      {
+       "kind": "add",
+       "text": "\t\tgo func() {",
+       "newLine": 50
+      },
+      {
+       "kind": "add",
+       "text": "\t\t\tdefer wg.Done()",
+       "newLine": 51
+      },
+      {
+       "kind": "add",
+       "text": "\t\t\tif ok, _ := l.Allow(\"shared\"); ok {",
+       "newLine": 52
+      },
+      {
+       "kind": "add",
+       "text": "\t\t\t\tallowed.Add(1)",
+       "newLine": 53
+      },
+      {
+       "kind": "add",
+       "text": "\t\t\t}",
+       "newLine": 54
+      },
+      {
+       "kind": "add",
+       "text": "\t\t}()",
+       "newLine": 55
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 56
+      },
+      {
+       "kind": "add",
+       "text": "\twg.Wait()",
+       "newLine": 57
+      },
+      {
+       "kind": "add",
+       "text": "\tif got := allowed.Load(); got != 50 {",
+       "newLine": 58
+      },
+      {
+       "kind": "add",
+       "text": "\t\tt.Fatalf(\"allowed %d requests, want exactly the burst of 50\", got)",
+       "newLine": 59
+      },
+      {
+       "kind": "add",
+       "text": "\t}",
+       "newLine": 60
+      },
+      {
+       "kind": "add",
+       "text": "}",
+       "newLine": 61
+      }
+     ]
+    }
+   ],
+   "isTest": true,
+   "repo": "notes"
+  }
+ ]
+}
