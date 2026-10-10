@@ -1,0 +1,1708 @@
+/* base.css — light lesson stylesheet used inside diagram iframes.
+ *
+ * Custom properties (--course-*) are the reuse contract: future lessons link
+ * this file and build on these tokens plus the base/utility classes below.
+ * Vanilla CSS only. No external resources. Mobile-first, 320px and up. */
+
+:root {
+  color-scheme: light;
+
+  /* Typography */
+  --course-font-body:
+    Georgia, "Iowan Old Style", "Source Serif Pro", "Times New Roman", serif;
+  --course-font-ui:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --course-font-mono:
+    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Measure and spacing */
+  --course-measure: 70ch;
+  --course-space-xs: 0.25rem;
+  --course-space-sm: 0.5rem;
+  --course-space-md: 1rem;
+  --course-space-lg: 1.75rem;
+  --course-space-xl: 2.75rem;
+  --course-space-xxl: 4rem;
+  --course-radius: 3px;
+
+  /* Light theme (default): plain page, ink text */
+  --course-color-bg: #ffffff;
+  --course-color-surface: #f4f4f2;
+  --course-color-text: #1a1a1a;
+  --course-color-muted: #4d4d4d;
+  --course-color-border: #cfcfc9;
+  --course-color-rule: #1a1a1a;
+  --course-color-accent: #0f4c5c;
+  --course-color-accent-contrast: #ffffff;
+  --course-color-accent-soft-bg: #e9f0f2;
+  --course-color-focus: #8a3b00;
+  --course-color-success: #2d6a4f;
+  --course-color-notice-bg: #f4f4f2;
+  --course-color-shadow: rgba(26, 26, 26, 0.12);
+}
+
+/* ---------- Base ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--course-color-bg);
+  color: var(--course-color-text);
+  font-family: var(--course-font-body);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 1.2rem + 3vw, 2.7rem);
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--course-space-sm);
+}
+
+h2 {
+  font-size: clamp(1.35rem, 1.1rem + 1.2vw, 1.65rem);
+  margin: var(--course-space-xxl) 0 var(--course-space-md);
+  padding-top: var(--course-space-md);
+  border-top: 3px double var(--course-color-rule);
+}
+
+h3 {
+  font-size: 1.2rem;
+  margin: var(--course-space-xl) 0 var(--course-space-sm);
+}
+
+h4 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+p {
+  margin: 0 0 var(--course-space-md);
+}
+
+a {
+  color: var(--course-color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+ul,
+ol {
+  margin: 0 0 var(--course-space-md);
+  padding-left: 1.4em;
+}
+
+li {
+  margin-bottom: var(--course-space-sm);
+}
+
+li::marker {
+  color: var(--course-color-muted);
+}
+
+code,
+kbd {
+  font-family: var(--course-font-mono);
+  font-size: 0.9em;
+}
+
+/* Visible focus everywhere, including summary and form controls. */
+:focus-visible {
+  outline: 3px solid var(--course-color-focus);
+  outline-offset: 2px;
+  border-radius: var(--course-radius);
+}
+
+/* ---------- Layout ---------- */
+
+.container {
+  max-width: var(--course-measure);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 48rem) {
+  .container {
+    padding-inline: 1.5rem;
+  }
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 100;
+  background: var(--course-color-surface);
+  color: var(--course-color-text);
+  border: 2px solid var(--course-color-focus);
+  border-radius: var(--course-radius);
+  padding: var(--course-space-sm) var(--course-space-md);
+  font-family: var(--course-font-ui);
+  font-size: 0.95rem;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+/* ---------- Header ---------- */
+
+.site-header {
+  border-top: 6px solid var(--course-color-rule);
+  padding-top: var(--course-space-lg);
+  padding-bottom: var(--course-space-md);
+}
+
+.site-header .kicker {
+  font-family: var(--course-font-ui);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--course-color-muted);
+  margin: 0 0 var(--course-space-sm);
+}
+
+.site-header .lede {
+  font-size: 1.15rem;
+  max-width: 60ch;
+}
+
+.program-facts {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--course-space-sm) var(--course-space-lg);
+  font-family: var(--course-font-ui);
+  font-size: 0.9rem;
+  color: var(--course-color-muted);
+  border-top: 1px solid var(--course-color-border);
+  border-bottom: 1px solid var(--course-color-border);
+  padding-block: var(--course-space-sm);
+}
+
+.program-facts li {
+  margin: 0;
+}
+
+.program-facts strong {
+  color: var(--course-color-text);
+  font-weight: 700;
+}
+
+/* ---------- Notices, badges, utilities ---------- */
+
+.notice {
+  background: var(--course-color-notice-bg);
+  border: 1px solid var(--course-color-muted);
+  border-radius: var(--course-radius);
+  padding: var(--course-space-md) var(--course-space-md) 0.25rem;
+  margin: 0 0 var(--course-space-lg);
+}
+
+.notice-title {
+  font-family: var(--course-font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 var(--course-space-sm);
+}
+
+.notice p:last-child {
+  margin-bottom: var(--course-space-md);
+}
+
+.badge {
+  display: inline-block;
+  font-family: var(--course-font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--course-color-accent);
+  color: var(--course-color-accent-contrast);
+  border-radius: 999px;
+  padding: 0.15em 0.7em;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Progressive enhancement: JS-only controls stay hidden without JS. */
+.js-only {
+  display: none;
+}
+
+html.js .js-only {
+  display: revert;
+}
+
+html.js .no-js-note {
+  display: none;
+}
+
+/* ---------- Phase jump nav ---------- */
+
+.phase-nav {
+  margin: var(--course-space-lg) 0 0;
+}
+
+.phase-nav p {
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+  color: var(--course-color-muted);
+  margin-bottom: var(--course-space-sm);
+}
+
+.phase-nav ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--course-space-sm);
+}
+
+.phase-nav li {
+  margin: 0;
+}
+
+.phase-nav a {
+  display: inline-block;
+  font-family: var(--course-font-ui);
+  font-size: 0.9rem;
+  border: 1px solid var(--course-color-border);
+  border-radius: 999px;
+  padding: 0.3em 0.9em;
+  text-decoration: none;
+  background: var(--course-color-surface);
+}
+
+.phase-nav a:hover {
+  border-color: var(--course-color-accent);
+  text-decoration: underline;
+}
+
+/* ---------- Progress and toolbar ---------- */
+
+.progress {
+  background: var(--course-color-surface);
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  padding: var(--course-space-md);
+  margin: var(--course-space-lg) 0;
+}
+
+.progress p {
+  margin-bottom: var(--course-space-sm);
+}
+
+.progress .count {
+  font-family: var(--course-font-ui);
+  font-weight: 700;
+}
+
+.progress progress {
+  width: 100%;
+  height: 0.6rem;
+  accent-color: var(--course-color-accent);
+}
+
+.progress .disclaimer {
+  font-size: 0.92rem;
+  color: var(--course-color-muted);
+  margin-bottom: 0;
+}
+
+.toolbar {
+  background: var(--course-color-bg);
+  border-block: 1px solid var(--course-color-border);
+  padding-block: var(--course-space-sm);
+  margin-bottom: var(--course-space-lg);
+}
+
+@supports (position: sticky) {
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 0 var(--course-color-shadow);
+  }
+}
+
+.toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--course-space-sm);
+  margin-bottom: var(--course-space-sm);
+}
+
+.toolbar-group:last-child {
+  margin-bottom: 0;
+}
+
+.toolbar-label {
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--course-color-muted);
+  margin-right: var(--course-space-xs);
+}
+
+.button {
+  font-family: var(--course-font-ui);
+  font-size: 0.88rem;
+  line-height: 1.3;
+  background: var(--course-color-surface);
+  color: var(--course-color-text);
+  border: 1px solid var(--course-color-border);
+  border-radius: 999px;
+  padding: 0.4em 0.95em;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--course-color-accent);
+}
+
+.button[aria-pressed="true"] {
+  background: var(--course-color-accent);
+  border-color: var(--course-color-accent);
+  color: var(--course-color-accent-contrast);
+  font-weight: 700;
+}
+
+.showing {
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+  color: var(--course-color-muted);
+}
+
+/* ---------- Phases and chapters ---------- */
+
+.phase {
+  margin-bottom: var(--course-space-xl);
+  scroll-margin-top: 6rem;
+}
+
+.phase-head p {
+  color: var(--course-color-muted);
+  font-size: 0.98rem;
+}
+
+.chapter-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.chapter {
+  border-top: 1px solid var(--course-color-border);
+  padding: var(--course-space-md) 0;
+  scroll-margin-top: 6rem;
+}
+
+.chapter-list > li:last-child .chapter {
+  border-bottom: 1px solid var(--course-color-border);
+}
+
+.chapter.is-done .chapter-done {
+  border-color: var(--course-color-success);
+  color: var(--course-color-success);
+  font-weight: 700;
+}
+
+.chapter.is-done .chapter-done::after {
+  content: "\2713";
+  font-weight: 700;
+}
+
+.chapter-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--course-space-sm);
+}
+
+.chapter-kicker {
+  display: block;
+  font-family: var(--course-font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--course-color-muted);
+  margin-bottom: 0.15em;
+}
+
+.chapter-done {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--course-space-sm);
+  font-family: var(--course-font-ui);
+  font-size: 0.88rem;
+  color: var(--course-color-muted);
+  cursor: pointer;
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  background: var(--course-color-surface);
+  padding: 0.25em 0.6em;
+}
+
+.chapter-done:hover {
+  border-color: var(--course-color-accent);
+}
+
+.chapter-done input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  accent-color: var(--course-color-accent);
+  cursor: pointer;
+}
+
+.scope {
+  margin: var(--course-space-sm) 0;
+  max-width: 62ch;
+}
+
+.field {
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+}
+
+/* Native disclosure: keyboard + AT support with zero JS. */
+.more {
+  margin-top: var(--course-space-sm);
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  background: var(--course-color-surface);
+}
+
+.more summary {
+  font-family: var(--course-font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: var(--course-space-sm) var(--course-space-md);
+  cursor: pointer;
+}
+
+.more summary::marker {
+  color: var(--course-color-accent);
+}
+
+.more summary:hover {
+  text-decoration: underline;
+}
+
+.facts {
+  margin: 0;
+  padding: 0 var(--course-space-md) var(--course-space-md);
+  border-top: 1px solid var(--course-color-border);
+}
+
+.facts dt {
+  font-family: var(--course-font-ui);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--course-color-muted);
+  margin-top: var(--course-space-md);
+}
+
+.facts dd {
+  margin: var(--course-space-xs) 0 0;
+}
+
+.facts dd ul {
+  margin-bottom: 0;
+}
+
+.facts a {
+  font-family: var(--course-font-ui);
+  font-size: 0.92rem;
+}
+
+/* ---------- Readiness, capstones, gates ---------- */
+
+.layer-list,
+.capstone-list {
+  list-style: none;
+  padding: 0;
+}
+
+.layer,
+.capstone {
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  background: var(--course-color-surface);
+  padding: var(--course-space-md);
+  margin-bottom: var(--course-space-md);
+}
+
+.layer h3,
+.capstone h3 {
+  margin-top: 0;
+}
+
+.layer .span,
+.capstone .span {
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+  color: var(--course-color-muted);
+  margin-bottom: var(--course-space-sm);
+}
+
+.gates {
+  counter-reset: gate;
+}
+
+.capstone-bar {
+  font-size: 0.98rem;
+}
+
+/* ---------- Footer ---------- */
+
+.site-footer {
+  border-top: 3px double var(--course-color-rule);
+  margin-top: var(--course-space-xxl);
+  padding: var(--course-space-lg) 0 var(--course-space-xxl);
+  font-size: 0.92rem;
+  color: var(--course-color-muted);
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ---------- Print ---------- */
+
+@media print {
+  :root {
+    --course-color-bg: #ffffff;
+    --course-color-surface: #ffffff;
+    --course-color-text: #000000;
+    --course-color-muted: #333333;
+    --course-color-border: #999999;
+    --course-color-rule: #000000;
+    --course-color-accent: #000000;
+    --course-color-notice-bg: #ffffff;
+  }
+
+  body {
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  .skip-link,
+  .toolbar,
+  .phase-nav,
+  .chapter-done,
+  .more summary,
+  .site-footer .no-print {
+    display: none !important;
+  }
+
+  .more {
+    border: none;
+    background: none;
+  }
+
+  .facts {
+    border-top: none;
+    padding: 0;
+  }
+
+  .chapter,
+  .layer,
+  .capstone,
+  .notice {
+    break-inside: avoid;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  a[href^="http"]::after {
+    content: " <" attr(href) ">";
+    font-size: 0.8em;
+    word-break: break-all;
+  }
+
+  .progress progress {
+    display: none;
+  }
+}
+
+/* ---------- Lessons and quizzes (reusable) ----------
+ *
+ * Generic lesson layer for any lesson page linking course.css.
+ * All selectors below are reusable across lessons; no per-lesson ids. */
+
+.crumb {
+  font-family: var(--course-font-ui);
+  font-size: 0.9rem;
+  margin-top: var(--course-space-lg);
+}
+
+/* One-sentence model or other key claim worth remembering. */
+.key-model {
+  font-size: 1.15rem;
+  background: var(--course-color-surface);
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  padding: var(--course-space-md);
+}
+
+/* Standalone definition list (outside <details>). */
+.vocab {
+  margin: 0 0 var(--course-space-lg);
+}
+
+.vocab dt {
+  font-family: var(--course-font-ui);
+  font-weight: 700;
+  margin-top: var(--course-space-md);
+}
+
+.vocab dd {
+  margin: var(--course-space-xs) 0 0;
+}
+
+/* Ordered conceptual path (e.g. the eight-step bid path). */
+.path-steps li {
+  margin-bottom: var(--course-space-sm);
+}
+
+/* Responsive data table. */
+.table-scroll {
+  overflow-x: auto;
+  margin-bottom: var(--course-space-lg);
+}
+
+.data-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.98rem;
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid var(--course-color-border);
+  padding: var(--course-space-sm) var(--course-space-md);
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table thead th {
+  background: var(--course-color-surface);
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+}
+
+/* Sequence quiz: one row per shuffled item. */
+.quiz {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--course-space-lg);
+}
+
+.quiz-row {
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  background: var(--course-color-surface);
+  padding: var(--course-space-md);
+  margin-bottom: var(--course-space-md);
+}
+
+.quiz-desc {
+  margin-top: 0;
+}
+
+.quiz-label {
+  display: block;
+  font-family: var(--course-font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: var(--course-space-sm) 0 var(--course-space-xs);
+}
+
+.quiz-select {
+  font-family: var(--course-font-ui);
+  font-size: 1rem;
+  padding: 0.3em 0.5em;
+  min-width: 4.5rem;
+  background: var(--course-color-bg);
+  color: var(--course-color-text);
+  border: 1px solid var(--course-color-muted);
+  border-radius: var(--course-radius);
+}
+
+.row-feedback {
+  font-family: var(--course-font-ui);
+  font-size: 0.9rem;
+  margin: var(--course-space-sm) 0 0;
+  min-height: 1.4em;
+}
+
+.row-feedback.is-correct {
+  color: var(--course-color-success);
+  font-weight: 700;
+}
+
+.row-feedback.is-wrong {
+  font-weight: 700;
+}
+
+.quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--course-space-sm);
+  margin-bottom: var(--course-space-md);
+}
+
+.score {
+  font-family: var(--course-font-ui);
+  font-weight: 700;
+}
+
+.score:empty {
+  display: none;
+}
+
+.review-hints {
+  font-size: 0.98rem;
+}
+
+.review-hints ul {
+  margin-bottom: 0;
+}
+
+@media print {
+  .quiz-actions,
+  .no-js-note {
+    display: none !important;
+  }
+
+  .table-scroll {
+    overflow: visible;
+  }
+
+  .quiz-row,
+  .key-model,
+  figure,
+  .data-table tr {
+    break-inside: avoid;
+  }
+}
+
+/* Multiple-choice snapshot exercise (radio groups; reusable).
+ * Structure: li.quiz-row > fieldset.quiz-fieldset[data-correct] > legend +
+ * ul.evidence + ul.choices. No per-lesson selectors. */
+
+.quiz-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.quiz-fieldset legend {
+  font-weight: 700;
+  padding: 0;
+  margin-bottom: var(--course-space-sm);
+}
+
+.evidence {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--course-space-md);
+  font-size: 0.98rem;
+}
+
+.evidence li {
+  margin-bottom: var(--course-space-xs);
+}
+
+.evidence strong {
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+}
+
+.choices {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.choices li {
+  margin-bottom: var(--course-space-sm);
+}
+
+.choices li:last-child {
+  margin-bottom: 0;
+}
+
+.choice {
+  display: flex;
+  gap: var(--course-space-sm);
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.choice input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-top: 0.2em;
+  flex-shrink: 0;
+  accent-color: var(--course-color-accent);
+  cursor: pointer;
+}
+
+.choice span {
+  display: block;
+}
+
+/* Simple box-and-arrow flow visual (reusable).
+ * Structure: ol.flow > li.flow-step. Arrows between steps are CSS-generated,
+ * so assistive tech hears only the ordered steps. Wraps on narrow screens. */
+
+.flow {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--course-space-md);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: var(--course-space-md);
+}
+
+.flow-step {
+  position: relative;
+  background: var(--course-color-surface);
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  padding: var(--course-space-sm) var(--course-space-md);
+  font-family: var(--course-font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.flow-step + .flow-step {
+  margin-left: 2.25rem;
+}
+
+.flow-step + .flow-step::before {
+  content: "\2192";
+  position: absolute;
+  left: -1.75rem;
+  top: 50%;
+  width: 1.25rem;
+  text-align: center;
+  transform: translateY(-50%);
+  color: var(--course-color-muted);
+  font-weight: 400;
+}
+
+/* Raw HTTP message blocks and line annotations (reusable).
+ * Structure: figure > pre.http-message > code holds the exact message text;
+ * ol.http-annotations holds per-line notes. Line numbers live in the notes,
+ * never inside the <pre>, so the message bytes stay exact. */
+
+.http-message {
+  font-family: var(--course-font-mono);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  background: var(--course-color-surface);
+  color: var(--course-color-text);
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  padding: var(--course-space-md);
+  margin: 0 0 var(--course-space-md);
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 2;
+  max-width: 100%;
+}
+
+.http-message code {
+  font: inherit;
+  color: inherit;
+  background: none;
+  padding: 0;
+}
+
+.http-annotations {
+  margin: 0 0 var(--course-space-lg);
+  font-size: 0.98rem;
+}
+
+.http-annotations strong {
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+}
+
+@media print {
+  .http-message {
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: none;
+  }
+
+  .http-message,
+  .http-annotations {
+    break-inside: avoid;
+  }
+}
+
+/* ---------- Constraint and verdict visuals (reusable) ----------
+ *
+ * First-class table cues for guarded tables: column badges naming the
+ * constraint on each column, row states for rejected and newly stored
+ * rows, verdict boxes for accept/reject outcomes, and cards for the
+ * insert simulator. All selectors below are reusable across lessons;
+ * no per-lesson ids. */
+
+:root {
+  --course-color-danger: #9d0208;
+  --course-color-danger-soft-bg: #fbe9e7;
+  --course-color-success-soft-bg: #e6f2ea;
+}
+
+/* Column constraint badges, stacked under the column name in thead. */
+.data-table .col-name {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.col-badge {
+  display: inline-block;
+  font-family: var(--course-font-ui);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: middle;
+  color: var(--course-color-text);
+  background: transparent;
+  border: 1px solid var(--course-color-muted);
+  border-radius: 999px;
+  padding: 0.1em 0.6em;
+  margin: 0.3em 0.3em 0 0;
+}
+
+.col-badge.is-pk {
+  background: var(--course-color-accent);
+  border-color: var(--course-color-accent);
+  color: var(--course-color-accent-contrast);
+}
+
+.col-badge.is-fk {
+  border-color: var(--course-color-accent);
+  color: var(--course-color-accent);
+}
+
+/* Row and cell states for verdict visuals. */
+.data-table tbody tr.row-invalid {
+  background: var(--course-color-danger-soft-bg);
+}
+
+.data-table tbody tr.row-invalid > *:first-child {
+  border-left: 4px solid var(--course-color-danger);
+}
+
+.data-table tbody tr.row-new {
+  background: var(--course-color-success-soft-bg);
+}
+
+.data-table tbody tr.row-new > *:first-child {
+  border-left: 4px solid var(--course-color-success);
+}
+
+.data-table td.cell-missing {
+  color: var(--course-color-muted);
+  font-style: italic;
+}
+
+.data-table td.cell-bad {
+  color: var(--course-color-danger);
+  font-weight: 700;
+}
+
+/* Right-aligned numeric columns. */
+.data-table th.num,
+.data-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accept/reject verdict box. Hidden while empty (before first try). */
+.verdict {
+  border: 1px solid var(--course-color-border);
+  border-left-width: 5px;
+  border-radius: var(--course-radius);
+  background: var(--course-color-surface);
+  padding: var(--course-space-sm) var(--course-space-md);
+  font-family: var(--course-font-ui);
+  font-size: 0.92rem;
+}
+
+.verdict:empty {
+  display: none;
+}
+
+.verdict.is-accept {
+  border-left-color: var(--course-color-success);
+}
+
+.verdict.is-reject {
+  border-left-color: var(--course-color-danger);
+}
+
+/* Insert simulator: one card per candidate row.
+ * Structure: ol.sim-list > li.sim-candidate > h3 + values table +
+ * fieldset.sim-predict + try button + p.verdict. */
+
+.sim-list {
+  list-style: none;
+  padding: 0;
+}
+
+.sim-candidate {
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  background: var(--course-color-surface);
+  padding: var(--course-space-md);
+  margin-bottom: var(--course-space-md);
+}
+
+.sim-candidate h3 {
+  margin-top: 0;
+  font-size: 1.05rem;
+}
+
+.sim-candidate .table-scroll {
+  margin-bottom: var(--course-space-md);
+}
+
+.sim-predict {
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  padding: var(--course-space-sm) var(--course-space-md);
+  margin: 0 0 var(--course-space-md);
+}
+
+.sim-predict legend {
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0 0.4em;
+}
+
+.sim-predict label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--course-space-sm);
+  margin: 0 var(--course-space-lg) var(--course-space-xs) 0;
+  font-family: var(--course-font-ui);
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.sim-predict input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: var(--course-color-accent);
+  cursor: pointer;
+}
+
+@media print {
+  :root {
+    --course-color-danger: #000000;
+    --course-color-danger-soft-bg: #ffffff;
+    --course-color-success-soft-bg: #ffffff;
+  }
+
+  .sim-candidate,
+  .verdict {
+    break-inside: avoid;
+  }
+}
+
+/* ---------- Schema diagrams (reusable) ----------
+ *
+ * Compact entity-relationship figure for schema lessons: boxes for
+ * tables, labeled links for cardinality. Static SVG; scales to the
+ * measure and inherits the light/print palettes from course
+ * tokens. No per-lesson selectors. */
+
+.schema-figure {
+  margin: 0 0 var(--course-space-lg);
+}
+
+.schema-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--course-color-bg);
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+}
+
+.schema-svg text {
+  font-family: var(--course-font-ui);
+  fill: var(--course-color-text);
+}
+
+.schema-box {
+  fill: var(--course-color-surface);
+  stroke: var(--course-color-muted);
+  stroke-width: 1.5;
+}
+
+.schema-box.is-junction {
+  stroke: var(--course-color-accent);
+  stroke-dasharray: 6 3;
+}
+
+.schema-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.schema-col {
+  font-family: var(--course-font-mono);
+  font-size: 12px;
+}
+
+.schema-link {
+  stroke: var(--course-color-muted);
+  stroke-width: 1.5;
+}
+
+.schema-link.is-optional {
+  stroke-dasharray: 5 4;
+}
+
+.schema-label {
+  font-size: 11px;
+  fill: var(--course-color-muted);
+}
+
+.schema-caption {
+  font-size: 0.95rem;
+  color: var(--course-color-muted);
+  margin-top: var(--course-space-sm);
+}
+
+@media print {
+  .schema-figure {
+    break-inside: avoid;
+  }
+}
+
+/* ---------- Strong teaching tables + breakout visuals (Lesson 0012+) ----------
+ * Learner feedback: tables must look like tables (grid + header hierarchy),
+ * dense visuals must break out wider than the 70ch prose column, and diagram
+ * and table regions must read as separate artifacts. Reusable: no per-lesson
+ * ids. Tables never become cards; narrow screens scroll horizontally. */
+
+:root {
+  --course-color-table-outer: #1a1a1a;
+  --course-color-table-grid: #6f6f6a;
+  --course-color-table-header-bg: #0f4c5c;
+  --course-color-table-header-text: #ffffff;
+  --course-color-table-zebra: #efede8;
+  --course-color-table-rowhead-bg: #e9f0f2;
+}
+
+/* Framed artifact: diagram and table regions read as separate objects. */
+.artifact {
+  border: 2px solid var(--course-color-table-outer);
+  border-radius: var(--course-radius);
+  background: var(--course-color-bg);
+  padding: var(--course-space-md);
+  margin: 0 0 var(--course-space-lg);
+}
+
+.artifact-label {
+  font-family: var(--course-font-ui);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--course-color-muted);
+  margin: 0 0 var(--course-space-sm);
+}
+
+.artifact .table-scroll,
+.artifact .schema-figure {
+  margin-bottom: 0;
+}
+
+/* Breakout: dense visuals go wider than the 70ch column on desktop. */
+.breakout {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 48rem) {
+  .breakout {
+    width: min(64rem, calc(100vw - 3rem));
+    margin-inline: calc((100% - min(64rem, calc(100vw - 3rem))) / 2);
+    max-width: none;
+  }
+}
+
+/* Strong grid tables. Outer 2px border; inner 1px grid stays visible. */
+.table-scroll {
+  overflow-x: auto;
+  margin-bottom: var(--course-space-lg);
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 38rem;
+  font-size: 0.98rem;
+  border: 2px solid var(--course-color-table-outer);
+  background: var(--course-color-bg);
+}
+
+.data-table caption {
+  caption-side: top;
+  text-align: left;
+  font-family: var(--course-font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--course-color-text);
+  background: var(--course-color-surface);
+  border: 2px solid var(--course-color-table-outer);
+  border-bottom: 0;
+  padding: var(--course-space-sm) var(--course-space-md);
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid var(--course-color-table-grid);
+  padding: 0.65rem 0.9rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table thead th {
+  background: var(--course-color-table-header-bg);
+  color: var(--course-color-table-header-text);
+  font-family: var(--course-font-ui);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background: var(--course-color-table-zebra);
+}
+
+.data-table tbody th[scope="row"] {
+  font-weight: 700;
+  background: var(--course-color-table-rowhead-bg);
+  white-space: nowrap;
+}
+
+.data-table tbody tr:nth-child(even) th[scope="row"] {
+  background: var(--course-color-table-rowhead-bg);
+  filter: brightness(0.97);
+}
+
+/* Mermaid whiteboard figure: readable at full size, scrolls on narrow panes. */
+.schema-figure {
+  margin: 0 0 var(--course-space-lg);
+}
+
+.mermaid {
+  background: var(--course-color-bg);
+  border: 1px solid var(--course-color-table-grid);
+  border-radius: var(--course-radius);
+  padding: var(--course-space-md);
+  min-height: 22rem;
+  overflow-x: auto;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.mermaid svg {
+  width: 56rem !important;
+  min-width: 56rem;
+  max-width: none !important;
+  height: auto;
+  font-size: 1rem;
+}
+
+.diagram-legend {
+  list-style: none;
+  padding: 0;
+  margin: var(--course-space-sm) 0 0;
+  font-family: var(--course-font-ui);
+  font-size: 0.88rem;
+  color: var(--course-color-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--course-space-sm) var(--course-space-lg);
+}
+
+.diagram-legend li {
+  margin: 0;
+}
+
+.mermaid-fallback {
+  font-family: var(--course-font-ui);
+  font-size: 0.9rem;
+  border: 1px dashed var(--course-color-table-grid);
+  border-radius: var(--course-radius);
+  padding: var(--course-space-sm) var(--course-space-md);
+  margin: var(--course-space-sm) 0 0;
+}
+
+/* Generic source-code block (reusable; first used Lesson 0013).
+ * Structure: figure > pre.code-block > code holds the exact source text.
+ * Same tokens as .http-message, without HTTP-specific semantics, so SQL,
+ * Go, and other listings share one style. No per-lesson selectors. */
+.code-block {
+  font-family: var(--course-font-mono);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  background: var(--course-color-surface);
+  color: var(--course-color-text);
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  padding: var(--course-space-md);
+  margin: 0 0 var(--course-space-md);
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 2;
+  max-width: 100%;
+}
+
+.code-block code {
+  font: inherit;
+  color: inherit;
+  background: none;
+  padding: 0;
+}
+
+@media print {
+  :root {
+    --course-color-table-outer: #000000;
+    --course-color-table-grid: #555555;
+    --course-color-table-header-bg: #000000;
+    --course-color-table-header-text: #ffffff;
+    --course-color-table-zebra: #f0f0f0;
+    --course-color-table-rowhead-bg: #e8e8e8;
+  }
+
+  .breakout {
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  .data-table {
+    min-width: 0;
+  }
+
+  .mermaid {
+    min-height: 0;
+  }
+
+  .mermaid svg {
+    min-width: 0;
+  }
+
+  .code-block {
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: none;
+    break-inside: avoid;
+  }
+}
+
+/* ---------- Build-track lessons (Lesson 0024+) ----------
+ * One service grows across a chapter. Reusable, no per-lesson ids:
+ * .track (where this lesson sits in the build), .compare (TypeScript beside Go),
+ * .task (the learner's small edit), .figure (inline SVG diagram),
+ * code-comment and edit-marker spans inside .code-block. */
+
+.track {
+  list-style: none;
+  padding: 0;
+  margin: var(--course-space-md) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--course-space-xs);
+  font-family: var(--course-font-ui);
+  font-size: 0.78rem;
+}
+
+.track li {
+  margin: 0;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--course-color-border);
+  border-radius: 999px;
+  color: var(--course-color-muted);
+  background: var(--course-color-bg);
+}
+
+.track li.is-done {
+  color: var(--course-color-text);
+  background: var(--course-color-surface);
+}
+
+.track li[aria-current="step"] {
+  color: var(--course-color-accent-contrast);
+  background: var(--course-color-accent);
+  border-color: var(--course-color-accent);
+  font-weight: 700;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--course-space-md);
+  margin-bottom: var(--course-space-lg);
+}
+
+@media (min-width: 48rem) {
+  .compare {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.compare > div {
+  min-width: 0;
+}
+
+.compare .code-block {
+  margin: 0;
+  height: calc(100% - 1.6rem);
+}
+
+.compare-label {
+  font-family: var(--course-font-ui);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--course-color-muted);
+  margin: 0 0 var(--course-space-xs);
+}
+
+.code-block .c {
+  color: #5f6b62;
+  font-style: italic;
+}
+
+.code-block mark {
+  background: #fff1c2;
+  color: inherit;
+  padding: 0 0.15em;
+  border-radius: 2px;
+}
+
+.task {
+  border: 2px solid var(--course-color-accent);
+  border-left-width: 8px;
+  border-radius: var(--course-radius);
+  background: var(--course-color-accent-soft-bg);
+  padding: var(--course-space-md) var(--course-space-md) var(--course-space-sm);
+  margin: 0 0 var(--course-space-lg);
+}
+
+.task-title {
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--course-color-accent);
+  margin: 0 0 var(--course-space-sm);
+}
+
+.task .code-block {
+  background: var(--course-color-bg);
+}
+
+.figure {
+  margin-top: 0;
+  margin-bottom: var(--course-space-lg);
+}
+
+.figure:not(.breakout) {
+  margin-inline: 0;
+}
+
+@media (max-width: 47.99rem) {
+  /* Like tables: keep diagram text legible and scroll sideways inside the figure. */
+  .figure {
+    margin-inline: 0;
+    overflow-x: auto;
+  }
+
+  .figure svg {
+    min-width: 42rem;
+  }
+}
+
+/* Long unbroken inline code (JSON lines, URLs) must wrap instead of widening the page. */
+p code,
+li code {
+  overflow-wrap: anywhere;
+}
+
+.figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+.figure figcaption {
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+  color: var(--course-color-muted);
+  margin-top: var(--course-space-sm);
+}
+
+.rules {
+  padding-left: 1.2rem;
+}
+
+.rules li {
+  margin-bottom: var(--course-space-sm);
+}
+
+@media print {
+  .track li[aria-current="step"] {
+    background: none;
+    color: #000000;
+    border: 2px solid #000000;
+  }
+
+  .code-block mark {
+    background: none;
+    text-decoration: underline;
+  }
+}
+
+/* ---------- Recall cards (Lesson 0031.1+) ----------
+ * Flashcards built on native <details>: the front shows code, the learner
+ * says the meaning aloud, then opens the card. Works without JavaScript. */
+
+.recall {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--course-space-lg);
+  display: grid;
+  align-items: start;
+  grid-template-columns: 1fr;
+  gap: var(--course-space-sm);
+}
+
+@media (min-width: 48rem) {
+  .recall {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.recall li {
+  margin: 0;
+}
+
+.recall details {
+  border: 1px solid var(--course-color-border);
+  border-radius: var(--course-radius);
+  background: var(--course-color-surface);
+}
+
+.recall summary {
+  cursor: pointer;
+  padding: var(--course-space-sm) var(--course-space-md);
+  font-family: var(--course-font-mono);
+  font-size: 0.86rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.recall details[open] summary {
+  border-bottom: 1px solid var(--course-color-border);
+}
+
+.recall .back {
+  padding: var(--course-space-sm) var(--course-space-md) var(--course-space-md);
+  background: var(--course-color-bg);
+  font-size: 0.95rem;
+}
+
+.recall .back p {
+  margin: 0 0 var(--course-space-xs);
+}
+
+.recall .ts {
+  font-family: var(--course-font-ui);
+  font-size: 0.85rem;
+  color: var(--course-color-muted);
+}
